@@ -1,0 +1,66 @@
+---
+title: preflight 개념 정리하기
+date: '2023-09-07'
+tags: ['study']
+draft: false
+summary: '지난 시간에 이어 preflight에 대해 자세하게 알아보자'
+---
+
+> # Preflight 
+- CORS (Cross-Origin Resource Sharing) 프로토콜의 일부
+- 웹 브라우저가 본래의 크로스 오리진 요청을 보내기 전에 안전한지 확인하기 위해 보내는 자동 요청
+- 요청은 웹 브라우저에서 자동으로 처리되며, 본래의 요청을 보내기 전에 서버가 해당 요청을 처리할 수 있는지 확인하는 용도로 사용된다.
+
+## Preflight 요청의 특징
+
+📌 HTTP OPTIONS 메서드: Preflight 요청은 HTTP ***OPTIONS*** 메서드를 사용하여 전송
+📌 Access-Control-Request-Headers: 실제 요청에서 어떤 HTTP 헤더가 사용될지
+📌 Access-Control-Request-Method: 실제 요청에서 어떤 HTTP 메서드 (예: POST, GET)가 사용될 것인지를 나타낸다.
+📌 Origin: 요청이 출처를 나타낸다.
+
+## Preflight 요청은 언제 발생할까
+- GET이나 HEAD 이외의 메서드를 사용하는 경우
+- 특정 종류의 헤더 (예: Authorization)를 가진 요청의 경우 
+- application/x-www-form-urlencoded, multipart/form-data, text/plain 이외의 Content-Type을 사용하는 요청의 경우
+
+<br/>
+
+> 위와 같은 조건 중 하나라도 해당되는 크로스 오리진 요청을 보내려고 하면 브라우저는 Preflight 요청을 먼저 보낸다.
+
+<br/>
+
+## 💡 preflight이 요청이 왜 필요할까? 
+1. 만약 요청을 보냈을 때 그냥 요청이 보내지게 된다면 서버에서 요청을 받고 처리하게 된다. 
+2. 악의적인 목적을 가진 사용자가 서버에 delete요청을 보냈을 경우 서버의 DB에서 보유 중인 데이터가 손상되는 상황이 발생할 수 있다.
+⇒ preflight 요청이 없을 경우 이미 요청이 실행되고 사용자에게 CORS 에레가 발생했다는 에러를 알린다.  
+브라우저 단에서 에러라고 판단할 경우도 있다.
+
+![](https://velog.velcdn.com/images/mintmin0320/post/12a407c0-0ad8-4384-bf40-491000fe94e7/image.png)
+📍 fetch 요청 전에 preflight 요청이 먼저 보내지고 OPTIONS 메서드로 요청이 보내진다.
+
+<br/>
+
+### 그림으로 살펴보자
+![](https://velog.velcdn.com/images/mintmin0320/post/a0711503-28a7-491b-ba01-aa083d9d61e6/image.png)
+(preflight 요청이 없을 경우 서버에 바로 요청을 보낼 수 있다.)
+
+<br/>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/507eab8f-a696-4d9f-ba61-8a740dfe31ac/image.png)
+(preflight 요청이 있다면, 사전에 preflight 요청의 결과를 브라우저에서 인식하고 본 요청을 차단하게 된다.)
+
+
+<br/><br/>
+
+# 알고 보니 고마운 녀석이었다..
+많은 초보자들에게 두려운 존재이며 서버와의 API 통신 코드를 작성할 때마다 항상 원망스러운 녀석이다. 이번에 CORS 관련 문제를 겪으면서 존재의 필요성에 대한 의구심이 많았다. 보안에 관련된 내용이라는 부분은 어렴풋이 알고 있었지만 역시 중요한 역할을 담당하고 있었다. 아직 미숙하지만 프로젝트를 몇 번 진행할 때마다 다양한 CORS 에러를 만나며 이제는 어느 정도 따로 검색하지 않고도 에러의 원인을 분석할 수 있게 된 것 같다. 다행히도 조금씩 성장하고 있다는 증거라고 생각한다.
+
+<br/>
+<br/>
+<br/>
+
+    
+    
+
+
+
