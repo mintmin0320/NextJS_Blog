@@ -56,6 +56,11 @@ const siteMetadata = {
       darkTheme: 'transparent_dark',
       themeURL: '',
       lang: 'ko',
+      strict: '0',
+      reactionsEnabled: '1',
+      emitMetadata: '0',
+      inputPosition: 'bottom',
+      crossorigin: 'anonymous',
     },
   },
   search: {
