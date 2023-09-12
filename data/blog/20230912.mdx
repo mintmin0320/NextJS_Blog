@@ -1,0 +1,106 @@
+---
+title: TML - if/else 리팩토링
+date: '2023-09-12'
+tags: ['react']
+draft: false
+summary: 'if/else 리팩토링 영상 정리하기'
+---
+
+# if/else 리팩토링
+📌 본 게시물은 [if else 리팩토링 중첩 조건문 처리하기](https://www.youtube.com/watch?v=p0YEviesgRM&list=WL&index=7) 영상을 보고 정리한 내용을 기록했습니다.
+
+내가 찾은 영상이나 추천, 피드백 받은 영상들을 당장 보기에는 시간이 부족해서 노션에 링크를 저장해뒀었는데, 오늘부터 1~2개 정도의 영상을 보고 내용을 정리해 보려고 한다. 이번 영상은 라이브 20기 피드백 때 알게 되었던 동영상으로 다른 영상들 보다 궁금해서 가장 먼저 선택하게 되었다.
+
+## 예시 코드
+```
+const facebookLogin = (id) => {
+	// 복잡한 과정 생략
+	return "페이스북";
+}
+
+const googleLogin = (id) => {
+	// 복잡한 과정 생략
+	return "구글";
+}
+
+const naverLogin = (id) => {
+	// 복잡한 과정 생략
+	return "네이버";
+}
+
+const socialLogin = (where, id) => {
+	let domain;
+	if(where === "naver"){
+		domain = naverLogin(id);
+	} else if(where === "google"){
+		domain = googleLogin(id);
+	} else if(where === "facebook"){
+		domain = facebookLogin(id);
+	}
+	return `${domain} %{id}`;
+}
+
+console.log(socialLogin("naver", "hamin"));
+console.log(socialLogin("google", "hamin"));
+```
+코드를 작성하다 보면 많은 조건 분기를 나눠야하는 상황이 비일비재하게 생긴다. 영상에서 제공하는 예시이긴 하지만 나도 보통은 이런 방식으로 작성하곤 했었다.
+socialLogin 함수 속 조건문을 switch로 바꾸는 방법까지는 생각을 많이 해봤으나 더 효율적인 방법이 존재했다.
+
+<br/>
+
+### 조건 부분을 함수로 분리, if/else -> switch로 바꿔보자
+```
+const executeLogin = (where, id) => {
+	switch(where){
+		case "naver":
+			return naverLogin(id);
+		case "google":
+			return googleLogin(id);
+		case "facenook":
+			return facebookLogin(id);
+	}
+}
+```
+아까보다는 코드의 가독성이 높아졌다.
+
+<br/>
+
+### return만 남은 형태 -> 객체로 전환
+```
+const SocialLoginMap = (where, id) => {
+	"naver": naverLogin,
+	"facebook": facebookLogin,
+	"google": googleLogin,
+};
+
+const socialLogin = (where, id) => {
+	let domain =	SocialLoginMap[where](id);
+	return `${domain} %{id}`;
+}
+
+console.log(socialLogin("naver", "hamin"));
+console.log(socialLogin("google", "hamin"));
+```
+#### 객체로 분리함으로써 얻은 이점
+1. 성능 향상(균일한 성능)
+기존 if/else는 운이 좋을 경우 첫 조건문에서 비교가 종료되지만 최악의 경우 끝까지 비교가 발생될 가능성이 있다. 하지만 객체로 작성할 경우 균일하게 비교가 발생하게 된다.
+
+2. 객체 매핑으로 가독성 증가 및 역할 분리
+조건문을 분리하고 객체로 작성함으로써 코드가 정돈되고 데이터에 대한 처리를 담당하는 SocialLoginMap, 실제 동작하는 socialLogin으로 역할을 분리해 줄 수 있다.
+또한 수정사항(추가, 제거, 변경 등) 발생 시 분리된 객체 코드에서 쉽게 변경이 가능하다.
+
+<br/>
+
+💡 if/else 문을 변경이 어렵다면?
+- 우선 switch로 변경하고 공통된 규칙성을 발견하면 더 쉽게 변경이 가능하다.
+
+<br/>
+
+# 반성 🧐
+영상을 보고 그동안 조건이 길어도 꾸역꾸역 끝까지 작성해왔던 과거를 반성할 수 있었다. 사실 콜백 함수를 외부로 분리하듯 조건문을 외부로 분리하는 방법까지는 생각해 봤지만 외부 객체나 배열로 분리하는 방법은 생각해 보지 못했다. 코드를 마냥 짧게 작성하는 것도 무분별하게 분리하는 것도 아닌 최적의 클린 코드를 작성하는 부분이 가장 어려운 것 같다. 습관이 되면 고치는데 많은 시간이 소모된다. 그렇기 때문에 어색하더라도 지금부터 좋은 습관을 만들기 위해 많은 공부와 노력이 필요하다!
+
+<br/><br/><br/>
+
+# 참고
+[if else 리팩토링 중첩 조건문 처리하기](https://www.youtube.com/watch?v=p0YEviesgRM&list=WL&index=7)
+
