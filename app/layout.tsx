@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     description: siteMetadata.description,
     url: './',
     siteName: siteMetadata.title,
-    images: '/static/images/hamin.PNG',
+    images: [siteMetadata.socialBanner],
     locale: 'ko_KR',
     type: 'website',
   },
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
   twitter: {
     title: siteMetadata.title,
     card: 'summary_large_image',
-    images: '/static/images/hamin.PNG',
+    images: [siteMetadata.socialBanner],
   },
 }
 
