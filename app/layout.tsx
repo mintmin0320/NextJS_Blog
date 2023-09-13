@@ -29,8 +29,8 @@ export const metadata: Metadata = {
     description: siteMetadata.description,
     url: './',
     siteName: siteMetadata.title,
-    images: [siteMetadata.socialBanner],
-    locale: 'en_US',
+    images: '/static/images/hamin.PNG',
+    locale: 'ko_KR',
     type: 'website',
   },
   alternates: {
