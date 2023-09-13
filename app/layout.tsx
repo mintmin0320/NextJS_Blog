@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     url: './',
     siteName: siteMetadata.title,
     images: [siteMetadata.socialBanner],
-    locale: 'ko_KR',
+    locale: 'en_US',
     type: 'website',
   },
   alternates: {
