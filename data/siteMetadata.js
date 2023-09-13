@@ -9,8 +9,7 @@ const siteMetadata = {
   siteUrl: 'https://tailwind-nextjs-starter-blog.vercel.app',
   siteRepo: 'https://github.com/timlrx/tailwind-nextjs-starter-blog',
   siteLogo: '/static/images/logo.png',
-  socialBanner:
-    'https://yeyak.seoul.go.kr/web/common/file/FileDown.do?file_id=1683594550094A0M1RUKJVBK52BD8ME5Y3MSYI',
+  socialBanner: '/static/images/twitter-card.png',
   mastodon: 'https://mastodon.social/@mastodonuser',
   email: 'mintmin0320@gmail.com',
   github: 'https://github.com/mintmin0320',
