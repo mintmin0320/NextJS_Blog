@@ -3,6 +3,8 @@
 import { useTheme } from 'next-themes'
 import { useEffect, useRef } from 'react'
 
+import 'css/prism.css'
+
 export default function Giscus() {
   const ref = useRef<HTMLDivElement>(null)
   const { resolvedTheme } = useTheme()
