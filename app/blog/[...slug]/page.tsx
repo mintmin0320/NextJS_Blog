@@ -68,8 +68,7 @@ export async function generateMetadata({
       card: 'summary_large_image',
       title: post.title,
       description: post.summary,
-      images:
-        'https://yeyak.seoul.go.kr/web/common/file/FileDown.do?file_id=1683594550094A0M1RUKJVBK52BD8ME5Y3MSYI',
+      images: imageList,
     },
   }
 }

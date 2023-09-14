@@ -92,10 +92,10 @@ useEffect(() => {
 > 'string | undefined' 형식의 인수는 'string' 형식의 매개 변수에 할당될 수 없습니다.
   'undefined' 형식은 'string' 형식에 할당할 수 없습니다.ts
 
-TS에서 발생하는 형식 안정성 관련 에러로 환경 변수(`process.env`)를 사용하여 설정값을 가져오는 부분에서 환경 변수의 값이 항상 존재한다는 것을 보장할 수 없기 때문에 에러가 발생하고 있었습니다.<br/>
+TS에서 발생하는 형식 안정성 관련 에러로 환경 변수(`process.env`)를 사용하여 설정값을 가져오는 부분에서 환경 변수의 값이 항상 존재한다는 것을 보장할 수 없기 때문에 에러가 발생하고 있었다.<br/>
 (process.env에서 가져온 값은 string | undefined 형식이기 때문)
 
-환경 변수가 undefined일 때 발생할 수 있는 문제를 사전에 방지하도록 합시다.
+환경 변수가 undefined일 때 발생할 수 있는 문제를 사전에 방지하도록 해야 한다..
 ```
     const repo = process.env.NEXT_PUBLIC_GISCUS_REPO
     const repoId = process.env.NEXT_PUBLIC_GISCUS_REPOSITORY_ID

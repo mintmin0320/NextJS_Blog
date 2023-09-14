@@ -1,0 +1,98 @@
+---
+title: TML - 비동기처리에 async/await 항상 사용해야할까 
+date: '2023-09-14'
+tags: ['정리']
+draft: false
+summary: '비동기 처리 관련 영상을 시청하고 정리하기'
+---
+📌 본 게시물은 [[Javascript 미세팁] 비동기처리는 무조건 async/await 아닌가요?](https://www.youtube.com/watch?v=Z1zHOh45NDU&list=PLjQV3hketAJmtfUlEiL6Aodbyed6aYnKL) 영상을 보고 정리한 내용을 기록했습니다.
+
+<br/>
+예전 첫 프로젝트 회고 때 async/await을 남발했던 것에 대한 후회를 했다는 글을 남겼던 적이 있었는데, JS를 공부하며 관련 영상을 찾아보던 중 해당 내용에 대한 부분을 발견해서 프로젝트에 적용하고 기록을 남겨볼 생각이다.
+
+## 테스트 프로젝트를 통해 알아보자
+```
+// App.tsx
+
+const test = async () => {
+  try {
+    const res = await fetchTestAPI();
+
+    console.log(res.data)
+  } catch (error) {
+    console.log(error);
+  }
+}
+```
+
+현재 test라는 함수는 서버에서 유저 목록을 받아오는 간단한 함수이고 fetchTestAPI라는 외부 함수에서 값을 리턴 받아 res에 저장하는 상태이다.
+
+<br/>
+
+```
+// api > testAPI.ts
+
+export const fetchTestAPI = async () => {
+  try {
+    const res = await axios.get(`http://localhost:8080/users`);
+
+    return res;
+  } catch (error) {
+    throw error;
+  }
+};
+```
+fetchTestAPI 함수는 axios를 사용해 서버에 get 메서드를 요청하고 있다. 
+
+<br/>
+
+## async/await 둘 다 사용해야할까?
+나는 기존에 두 함수에서 모두 async/await 키워드를 사용하는 것처럼 코드를 작성하고 있었다. 지금 글을 작성하며 생각해 보면 비동기처리니까 당연하게 작성해야 된다는 생각을 가지고 있었던 것 같다. 사실 두 함수에서 사용해도 에러가 발생하거나 큰 성능저하는 발생하지 않는다고 한다. 반대로 처음 실행되는 함수 test에서만 키워드를 사용해도 정상적으로 동작한다.
+
+<br/>
+
+>  비동기 코드에서 async 키워드를 사용하면 해당 함수는 항상 프로미스(Promise)를 반환한다. 
+- 함수 내에서 값을 직접 반환하면 그 값은 Promise.resolve(반환값)으로 감싸져서 반환
+
+<br/>
+
+처음에 test 함수에서 이미 async 키워드를 사용했으므로 이미 그 결과는 프로미스를 반환하게 된다. 따라서 이미 비동기 코드이기 때문에 또 한 번 키워드를 사용할 필요가 없는 것이다.
+
+<br/>
+
+## 실행 결과
+### 기존 코드
+요청이 정상적으로 진행되면 fetchTestAPI 함수가 유저 목록 데이터를 반환하고 콘솔에 출력하게 된다. 문제는 없다.
+![](https://velog.velcdn.com/images/mintmin0320/post/af1cf58d-1ba0-4d26-ab47-d7616fe81099/image.png)
+
+### 변경 코드
+```
+export const fetchTestAPI = () => {
+  try {
+    const res = axios.get(`http://localhost:8080/users`);
+
+    return res;
+  } catch (error) {
+    throw error;
+  }
+};
+```
+
+따로 async 키워드를 작성하지 않아도 res 변수는 프로미스를 반환하게 된다.
+![](https://velog.velcdn.com/images/mintmin0320/post/fb2bbb65-2577-4013-b7a3-de48107e1d64/image.png)
+
+<br/>
+
+## 굳이 문제가 없는데 작성할 이유?
+- 의미없는 코드를 작성하는 것과 같고 협업 시 오해를 발생시킬 수 있다.
+- async 키워드를 사용하는 것은 함수를 Promise로 감싸는 것임을 염두할 필요가 있다.
+
+<br/><br/>
+
+# 반성
+비동기 코드라는 이유로 별생각 없이 async 키워드를 남발했던 것 같다. 그동안 모든 비동기 함수 중간 로직에 async 키워드를 사용했었는데, 모두 리팩토링해야 될 것 같다.. 😭 물론 에러를 발생시키지는 않지만 굳이 사용해야 될 이유가 없다고 느껴진다. 앞으로도 관련 영상들을 보고 내 코드를 리팩토링하는 과정을 가지도록 해야겠다.
+
+<br/><br/><br/>
+
+# 참고
+[[Javascript 미세팁] 비동기처리는 무조건 async/await 아닌가요?](https://www.youtube.com/watch?v=Z1zHOh45NDU&list=PLjQV3hketAJmtfUlEiL6Aodbyed6aYnKL)
