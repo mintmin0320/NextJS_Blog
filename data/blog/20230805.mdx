@@ -1,0 +1,109 @@
+---
+title: '[트러블 슈팅] - The above error occurred in the <ForwardRef(ReactQueryDevtools Panel)> component:'
+date: '2023-08-05'
+tags: ['ERROR_REPORT🚀']
+draft: false
+summary: 'React-Query-Devtools을 적용하며 발생한 버전 오류에 대한 기록'
+---
+
+React-Query-Devtools을 사용하려고 공식 문서를 보며 작성하고 있는데, 갑자기 오류가 발생했습니다. 항상 오류가 발생해서 구글에 검색했을 때 한글로 작성된 게시물이 없거나 관련 내용이 안 나온다면 개인의 실수일 가능성이 크기 때문에 작성한 코드를 다시 점검하며 에러의 진원지를 찾아봤습니다.
+
+![](https://velog.velcdn.com/images/mintmin0320/post/0da43447-7cb8-45e4-927d-e0a28d8c3577/image.png)
+
+<br/>
+
+## Error 완전탐색
+```
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      {/* The rest of your application */}
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
+  )
+}
+```
+보일러플레이트 코드를 그대로 작성했음에도 에러가 발생해서 많이 당황스러웠지만 다시 유심히 살펴보니 정말 간단한 원인이 존재했습니다.
+```
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+```
+바로 @tanstack라는 이 코드 때문에 에러가 발생하고 있었습니다. tanstack를 조사하며 충격적인 사실을 알게 되었습니다.
+
+>TanStack Query
+- 비동기 작업 처리를 돕는 라이브러리
+- v3 버전까지는 React Query라는 이름으로 React만 지원
+- v4 버전부터는 TS/JS, React, Vue, Solid, Svelte에서 모두 사용할 수 있도록 업데이트
+- TranStack Query로 이름 변경
+
+즉 저희가 알고 있는 React-Query는 TanStack Query라는 비동기 작업 처리를 돕는 라이브러리가 v3까지 사용했던 이름이고, React만 사용할 수 있도록 지원됐지만
+v4 버전부터 TanStack Query로 이름이 변경되고 많은 프레임 워크에서 사용할 수 있도록 되었습니다.
+>TanStack 제공하는 라이브러리들이 많은 프레임워크에서 사용 가능 (v4)
+- Solid Query
+- Svelte Query
+- Vue Query
+
+
+<br/>
+
+## 상세 원인
+![](https://velog.velcdn.com/images/mintmin0320/post/643bcd55-50ca-44ba-be64-750189ca0edc/image.png)문제가 발생한 이유는 v3 공식문서에서 
+```
+npm i react-query
+```
+위 코드를 입력해 v3 버전으로 react-query 라이브러리를 설치하고
+
+![](https://velog.velcdn.com/images/mintmin0320/post/79ab0b70-e425-4bd7-af47-6947b59f8017/image.png)구글에 검색해서 찾았던 React-Query-Devtools는 v4 버전으로 설치를 해서 발생했던 오류였습니다! 
+
+<br/>
+
+## 해결
+버전을 통일하는 것이 결국 해결책이라는 것을 알게 되었습니다. **v3 버전을 사용하실 분들 중에 React-Query-Devtools를 사용하실 분들은 추가로 라이브러리를 다운로드할 필요 없습니다!** 
+**v4 버전을 사용하실 분들은 라이브러리 설치가 필요합니다!** v4 버전과 동일하게 설치하시면 됩니다!
+
+>V3 버전 react-query 설치 (⭐️v3 devtools는 설치 불필요!⭐️)
+```
+$ npm i react-query
+or
+$ yarn add react-query
+```
+>v4 버전 react-query 설치 
+```
+$ npm i @tanstack/react-query
+or
+$ pnpm add @tanstack/react-query
+or
+$ yarn add @tanstack/react-query
+```
+>v4 devtools 설치
+```
+$ npm i @tanstack/react-query-devtools
+or
+$ pnpm add @tanstack/react-query-devtools
+or
+$ yarn add @tanstack/react-query-devtools
+```
+
+<br/>
+<br/>
+
+## 🚀후기
+react query를 구글에 검색해서 공식 문서에 접근하면 v3 버전을 기본으로 보여주는데, react query devtools를 검색할 경우 v4 버전을 보여줍니다. 혹시 다른 분들도 저처럼 tanstack에 대해서 몰랐던 분들이 계시다면 다시 확인해 보시면 몰랐던 사실들이 보일 거라 생각합니다!
+![](https://velog.velcdn.com/images/mintmin0320/post/d4dddaf3-1502-4235-9875-f5900c00a743/image.png)
+![](https://velog.velcdn.com/images/mintmin0320/post/ed9a53ea-a2ce-444a-99d4-df6fb88c0955/image.png)
+포스팅하며 다시 확인해 보니 메인 페이지에도 TanStack Query라는 명칭이 왜 적혀있는지 이유를 알게 됐네요,, 물론 react에서 사용할 때는 TanStack의 react query라는 라이브러리를 사용해서 큰 상관은 없지만 뭔가 알 수 없는 배신감이 드는 것 같네요😅 
+현재 v5 버전까지 출시되었지만 v3, v4 버전을 사용해도 큰 이상은 없는 것 같습니다.
+공식 문서나 다른 분들이 포스팅한 내용을 사용하실 때 버전을 잘 확인하고 사용하시면 좋을 것 같네요!
+도움이 되셨길 바라며 포스팅을 마치겠습니다. 
+
+
+
+
+<br/>
+<br/>
+
+## 참고
+[TanStack Query v4 installation](https://tanstack.com/query/v4/docs/react/installation)
+[TanStack Query v4 Devtools](https://tanstack.com/query/v4/docs/react/devtools)
+[v3 -> v4 업데이트 내용](https://tanstack.com/query/latest/docs/react/guides/migrating-to-react-query-4#new-api-for-usequeries)
