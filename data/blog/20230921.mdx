@@ -1,0 +1,66 @@
+---
+title: '[TML] - react-to-print 라이브러리를 이용해 원하는 컴포넌트 프린트 해보기'
+date: '2023-09-21'
+tags: ['TML']
+draft: false
+summary: '진행하고 있는 프로젝트에서 회의록을 프린트할 수 있도록 구현해 보자'
+---
+
+기존에는 react-speech-recognition 라이브러리를 사용해 회의(음성) 내용을 등록/수정/삭제할 수 있도록 구현했었는데, 1차 데모 발표를 끝내고 모든 기능들을 재정비하며 점검하던 중 회의록을 프린트할 수 있다면 좋겠다는 생각을 했다. 
+역시나 NPM에는 없는 기능이 없다. 구글에 관련 키워드를 검색하여 곧바로 관련 NPM 문서를 발견할 수 있었다. 대략적으로 제공되는 샘플 코드를 봤을 때 큰 어려움이 없어 보였다. 곧바로 프로젝트에 적용해 보도록 하자.
+
+<br/>
+
+## 보일러 플레이트 코드
+
+```
+import React, { useRef } from 'react';
+import { useReactToPrint } from 'react-to-print';
+
+import { ComponentToPrint } from './ComponentToPrint';
+
+const Example = () => {
+  const componentRef = useRef();
+  const handlePrint = useReactToPrint({
+    content: () => componentRef.current,
+  });
+
+  return (
+    <div>
+      <ComponentToPrint ref={componentRef} />
+      <button onClick={handlePrint}>Print this out!</button>
+    </div>
+  );
+};
+```
+
+- useRef로 프린트하고 싶은 컴포넌트(ComponentToPrint)에 접근하고 useReactToPrint 메서드를 통해 프린트가 가능하다.
+- onClick 이벤트가 발생하면 프린트될 컴포넌트의 CSS도 적용된다. 이 부분은 아래 사진에서 확인해 보자
+
+<br/>
+
+## 내 코드에 적용해보자
+
+![](https://velog.velcdn.com/images/mintmin0320/post/c446a0c3-c8b5-4a77-b274-f284c9c7efa2/image.png)
+
+프린트 버튼에 onClick 이벤트를 걸었고 MinutesDataWrap의 경우 아래 사진 부분에 해당한다.
+
+![](https://velog.velcdn.com/images/mintmin0320/post/d59e2f1c-37f9-44b9-b0e7-e6077720f08e/image.png)
+
+MinutesDataWrap (styled-components) 컴포넌트에 ref를 걸어줬다. 단순 텍스트만 출력하는 컴포넌트에 사용해도 되지만 가독성도 떨어지고 미관상 좋지 않기 때문에 양식 그대로 출력하도록 해줬다.
+
+- 현재 서버가 동작되고 있지 않은 관계로 더미 데이터를 넣어서 테스트를 진행했다.
+- UI는 수정할 예정이다.
+
+![](https://velog.velcdn.com/images/mintmin0320/post/7737c323-2112-4263-a7f3-48120c2da18e/image.png)
+
+위 이미지를 라이브러리를 이용해 onClick 이벤트를 발생시키면
+
+![](https://velog.velcdn.com/images/mintmin0320/post/285f0aae-54f2-4b78-b9c8-db455b63cab9/image.png)
+
+작성했던 CSS 그대로 인쇄가 되는 모습을 확인할 수 있다.
+
+<br/>
+
+## 후기
+음성 녹음, 프린트 등 NPM 라이브러리에 생각보다 재미있고 유용한 기능들이 많은 것 같다. 회의록 관련 기능을 구현하며 다소 부족하다는 생각을 하고 있었는데 유용한 기능이 추가된 것 같다. 프린트는 앞으로도 많이 사용될 콘텐츠라고 생각하기 때문에 개인 프로젝트에서 학교 공지사항을 프린트하는 방안도 생각해 보도록 해야겠다. 라이브러리에만 너무 의존하는 것도 좋지는 않지만 이미 구현된 좋은 기능들이 있다면 적용하는 것도 중요한 것 같다. 다음에는 작성된 회의록을 공유하는 방법을 구현해 볼 계획이다~!
