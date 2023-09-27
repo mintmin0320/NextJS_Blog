@@ -4,7 +4,7 @@ const siteMetadata = {
   author: '민트민',
   headerTitle: '취준생 민트민',
   description: '"JS 그거 어떻게 하는 건데."',
-  language: 'en-us',
+  language: 'ko',
   theme: 'system', // system, dark or light
   siteUrl: 'https://tailwind-nextjs-starter-blog.vercel.app',
   siteRepo: 'https://github.com/timlrx/tailwind-nextjs-starter-blog',
@@ -18,7 +18,7 @@ const siteMetadata = {
   // facebook: 'https://facebook.com',
   // youtube: 'https://youtube.com',
   linkedin: 'https://www.linkedin.com/in/%ED%95%98%EB%AF%BC-%EB%B0%95-0aba16285/',
-  locale: 'en-US',
+  locale: 'ko', // Main.tsx 날짜 한국어로 설정
   analytics: {
     // If you want to use an analytics provider you have to add it to the
     // content security policy in the `next.config.js` file.

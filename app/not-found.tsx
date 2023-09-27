@@ -1,3 +1,7 @@
+/*
+  404 페이지
+*/
+
 import Link from '@/components/Link'
 
 export default function NotFound() {
@@ -10,14 +14,14 @@ export default function NotFound() {
       </div>
       <div className="max-w-md">
         <p className="mb-4 text-xl font-bold leading-normal md:text-2xl">
-          Sorry we couldn't find this page.
+          잘못된 경로입니다!! 돌아가 주세요
         </p>
-        <p className="mb-8">But dont worry, you can find plenty of other things on our homepage.</p>
+        <p className="mb-8">뒤로 가거나 하단에 인덱스 페이지로 이동하는 버튼을 클릭해 주세요~</p>
         <Link
           href="/"
           className="focus:shadow-outline-blue inline rounded-lg border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium leading-5 text-white shadow transition-colors duration-150 hover:bg-blue-700 focus:outline-none dark:hover:bg-blue-500"
         >
-          Back to homepage
+          돌아가기
         </Link>
       </div>
     </div>
