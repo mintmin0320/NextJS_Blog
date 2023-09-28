@@ -10,8 +10,8 @@ const MAX_DISPLAY = 100
 
 export default function Home({ posts }) {
   return (
-    <>
-      <div className="divide-y divide-gray-200 dark:divide-gray-700 ">
+    <div className="flex flex-col items-center">
+      <div className="divide-y divide-gray-200 dark:divide-gray-700 w-10/12">
         <div className="space-y-2 pb-8 pt-6 md:space-y-5">
           <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
             {siteMetadata.description}
@@ -78,6 +78,6 @@ export default function Home({ posts }) {
         </div>
       )} */}
       <ScrollTopAndComment />
-    </>
+    </div>
   )
 }

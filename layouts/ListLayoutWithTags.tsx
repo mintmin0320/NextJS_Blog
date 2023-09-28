@@ -90,10 +90,10 @@ export default function ListLayoutWithTags({
                 <h3 className="text-primary-500 font-bold uppercase">카테고리</h3>
               ) : (
                 <Link
-                  href={`/blog`}
+                  href={`/`}
                   className="font-bold uppercase text-gray-700 dark:text-gray-300 hover:text-primary-500 dark:hover:text-primary-500"
                 >
-                  카테고리
+                  go home
                 </Link>
               )}
               <ul>

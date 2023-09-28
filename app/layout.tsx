@@ -10,6 +10,7 @@ import Footer from '@/components/Footer'
 import siteMetadata from '@/data/siteMetadata'
 import { ThemeProviders } from './theme-providers'
 import { Metadata } from 'next'
+import ScrollProgressBar from '@/components/ScrollProgressBar'
 
 const space_grotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -73,15 +74,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fff" />
       <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000" />
       <link rel="alternate" type="application/rss+xml" href="/feed.xml" />
-      <body className="bg-white text-black antialiased dark:bg-gray-950 dark:text-white bg-slate-100">
+      <body className="bg-white text-black antialiased dark:bg-gray-950 dark:text-white bg-zinc-100">
+        <ScrollProgressBar />
         <div className="flex w-11/12 mx-auto">
           <ThemeProviders>
             <Analytics analyticsConfig={siteMetadata.analytics as AnalyticsConfig} />
             {/* SectionContainer 컴포넌트 css 수정하기  */}
-            <div className="w-80 mt-20 fixed h-full top-0">
+            {/* <div className="w-60 mt-20 fixed h-full top-0">
               <img src="../static/images/banner.jpeg" />
-            </div>
-            <div className="ml-80 flex w-full h-screen flex-col justify-between font-sans">
+            </div> */}
+            <div className="ml-60 flex w-full h-screen flex-col justify-between font-sans">
               <SearchProvider searchConfig={siteMetadata.search as SearchConfig}>
                 <Header />
                 <main className="mb-auto">{children}</main>

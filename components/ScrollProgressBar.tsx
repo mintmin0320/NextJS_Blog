@@ -22,21 +22,23 @@ const ScrollProgressBar = () => {
 
   const setProgressColor = (progress: number) => {
     if (progress <= 40) {
-      return 'bg-blue-400'
+      return 'bg-violet-300'
     }
 
     if (progress <= 75) {
-      return 'bg-blue-500'
+      return 'bg-violet-400'
     }
 
     if (progress > 75) {
-      return 'bg-blue-700'
+      return 'bg-violet-500'
     }
   }
 
   return (
     <div
-      className={`h-0.5 transition-all duration-300 ease-out ${setProgressColor(progress)}`}
+      className={`h-1 fixed top-0 transition-all duration-300 ease-out ${setProgressColor(
+        progress
+      )}`}
       style={{ width: `${progress}%` }}
     />
   )
