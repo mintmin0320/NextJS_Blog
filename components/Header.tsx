@@ -6,7 +6,7 @@ import ThemeSwitch from './ThemeSwitch'
 import SearchButton from './SearchButton'
 
 const Header = () => (
-  <header className="flex items-center justify-between py-10">
+  <header className="flex items-center justify-around py-10">
     <div>
       <Link href="/" aria-label={siteMetadata.headerTitle}>
         <div className="flex items-center justify-between">

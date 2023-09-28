@@ -73,20 +73,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fff" />
       <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000" />
       <link rel="alternate" type="application/rss+xml" href="/feed.xml" />
-      <body className="w-full bg-white text-black antialiased dark:bg-gray-950 dark:text-white">
-        <ThemeProviders>
-          <Analytics analyticsConfig={siteMetadata.analytics as AnalyticsConfig} />
-          {/* SectionContainer 컴포넌트 css 수정하기  */}
-          <SectionContainer>
-            <div className="flex h-screen flex-col justify-between font-sans ">
+      <body className="bg-white text-black antialiased dark:bg-gray-950 dark:text-white bg-slate-100">
+        <div className="flex w-11/12 mx-auto">
+          <ThemeProviders>
+            <Analytics analyticsConfig={siteMetadata.analytics as AnalyticsConfig} />
+            {/* SectionContainer 컴포넌트 css 수정하기  */}
+            <div className="w-80 mt-20 fixed h-full top-0">
+              <img src="../static/images/banner.jpeg" />
+            </div>
+            <div className="ml-80 flex w-full h-screen flex-col justify-between font-sans">
               <SearchProvider searchConfig={siteMetadata.search as SearchConfig}>
                 <Header />
                 <main className="mb-auto">{children}</main>
+                <Footer />
               </SearchProvider>
-              <Footer />
             </div>
-          </SectionContainer>
-        </ThemeProviders>
+          </ThemeProviders>
+        </div>
       </body>
     </html>
   )

@@ -17,16 +17,14 @@ export function genPageMetadata({ title, description, image, ...rest }: PageSEOP
       description: description || siteMetadata.description,
       url: './',
       siteName: siteMetadata.title,
-      // images: image ? [image] : [siteMetadata.socialBanner],
-      images: '/static/images/banner.jpeg',
+      images: image ? [image] : [siteMetadata.socialBanner],
       locale: 'ko',
       type: 'website',
     },
     twitter: {
       title: `${title} | ${siteMetadata.title}`,
       card: 'summary_large_image',
-      images: '/static/images/banner.jpeg',
-      // images: image ? [image] : [siteMetadata.socialBanner],
+      images: image ? [image] : [siteMetadata.socialBanner],
     },
     ...rest,
   }
