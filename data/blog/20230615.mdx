@@ -1,0 +1,98 @@
+---
+title: '[TML] - Nest로 만든 서버를 Heroku를 이용해 배포하기'
+date: '2023-06-15'
+tags: ['TML']
+draft: false
+summary: 'HEROKU를 이용해 Nest 서버 배포하기'
+---
+
+졸업작품 때 발표를 위해 급하게 사용했던 HEROKU를 이용해 서버를 배포해 보겠다!
+
+## 준비물
+>- Nest.js로 만든 프로젝트
+>- 프로젝트가 업로드된 GitHub Repository
+>- Heroku 계정 및 결제 카드 등록  - [heroku 사이트](https://dashboard.heroku.com/apps)
+
+## GitHub 연동
+로그인 하고 Create new app을 클릭해 준다.
+![](https://velog.velcdn.com/images/mintmin0320/post/cd2f30f8-a964-4d96-8b48-beabffc5f440/image.png)
+
+App name은 각자 자유롭게 적어준 뒤에 Create app을 클릭해 주고
+( pipeline은 사용하지 않고 git repository를 사용합니다. )
+![](https://velog.velcdn.com/images/mintmin0320/post/94bd8bef-606f-4e07-ab0e-5ac11f1d6e24/image.png)
+
+Deployment method에서 GitHub를 선택한다.
+![](https://velog.velcdn.com/images/mintmin0320/post/c555ef9f-64db-4777-97c8-603ffb5e8090/image.png)
+
+이제 Connect to GitHub에서 준비한 repository를 연결한다.
+![](https://velog.velcdn.com/images/mintmin0320/post/6a6e6542-4f3e-4b13-987f-79d45acef0b7/image.png)1 - 본인의 GitHub아이디를 선택하면 된다. mee-ti인 이유는 내 프로젝트 리포지토리가 Organizations에 위치해서 그렇다. <br/>
+2 - search 버튼을 클릭하면 나의 GitHub Repository 목록 조회가 가능하다. 원하는 repository를 Connect 하면 된다.
+
+![](https://velog.velcdn.com/images/mintmin0320/post/cd9538a9-a7a1-4013-9f4a-4f0fdac7d49a/image.png)
+App connected to GitHub 연동이 정상적으로 작동되면 위 사진과 같이 표시된다.
+
+![](https://velog.velcdn.com/images/mintmin0320/post/32b88d2d-a8ae-479d-93f2-77cf81d46624/image.png)
+
+1(Automatic deploys) - 자동 배포 관련 설정 부분이다. Heroku가 Github에서 Action을 감지해 자동으로 서버를 배포를 가능하게 해준다. 
+Enable Automatic Deploys 버튼을 클릭해 자동 배포를 활성화해 준다.
+
+2(Manual deploy) - 수동 배포 관련 설정이다. 사용할 계획은 딱히 없음으로 pass 하겠다.
+
+![](https://velog.velcdn.com/images/mintmin0320/post/44b6d8ff-6c9e-496c-8f06-a3907c29c0fd/image.png)활성화가 완료 됐으면 환경변수 설정을 진행하도록 하자.
+
+
+![](https://velog.velcdn.com/images/mintmin0320/post/f999b54b-df1c-40bd-a1a3-0268bdece23b/image.png)Settings -> 
+
+![](https://velog.velcdn.com/images/mintmin0320/post/e8b4c951-1d4f-48cb-ba89-813cfc1f506a/image.png)Reveal Config Vars 클릭 
+![](https://velog.velcdn.com/images/mintmin0320/post/c4bab96d-7a74-4d34-8706-8a7a7034b722/image.png) 개인 프로젝트의 환경변수를 추가해 주면 Heroku에서 설정은 끝이다.
+
+
+
+## Nest.js - package-json
+이제 Heroku에서 서버 파일을 빌드하고 실행할 수 있도록 package.json에
+scripts를 추가해 주면 된다.
+```
+  package.json
+  
+   "scripts": {
+	  "prestart:prod": "rimraf dist && npm run build",
+	  "web": "npm run start:prod"
+    }
+```
+
+
+## 배포 결과 확인
+![](https://velog.velcdn.com/images/mintmin0320/post/72fe4875-6a5c-4860-a1c1-2073b5f20875/image.png)이제 프로젝트를 commit하고 결과를 확인해 보면 오류가 발생한다. 로그 확인을 위해 우선 heroku를 설치해 주고
+```
+$ brew tap heroku/brew && brew install heroku
+```
+로그 조회 명령어를 입력해 준다.
+```
+heroku logs --tail -a <application_name>
+```
+![](https://velog.velcdn.com/images/mintmin0320/post/f8153a1d-1a54-450f-af0a-4ad7aeaafcb3/image.png)로그를 확인해 본 결과 화가 잔뜩 나 있는 모습을 볼 수 있다. npm start script가 없어서 실행 과정에서 문제가 발생한 문제이다.  package.json에 start script를 추가해 주고
+```
+ package.json
+
+ "scripts": {
+  	"start": "node dist/main.js",
+    "prestart:prod": "rimraf dist && npm run build",
+    "web": "npm run start:prod"
+ }
+```
+>"start": "node dist/main.js" ??
+
+타입스크립트를 자바스크립트로 컴파일하고 압축된 빌드 폴더(dist)에 main.js로 서버를 실행시킨다.
+
+## 결과 화면
+![](https://velog.velcdn.com/images/mintmin0320/post/1926b091-dfad-4b4d-9445-4dd77fc1e384/image.png)script를 추가하고 다시 commit 해보니 Heroku가 제 repository에서의 변화를 감지하고 혼자서 뚝딱뚝딱 build를 실행 완료됐다. View build log를 클릭해 들어가 보면 
+![](https://velog.velcdn.com/images/mintmin0320/post/30c2c28a-fc36-4419-863f-7d72361ec8eb/image.png)
+
+log가 출력되고 마지막에 배포된 서버의 주소가 표시되는데 정상 작동하는지 접속해보면
+
+![](https://velog.velcdn.com/images/mintmin0320/post/629319d5-39f8-4ddf-9f9e-8ffd2aa12faa/image.png) Swagger문서가 접속이 되는 것으로 보아 잘 배포가 된 것 같다.
+<br/>
+
+## 후기
+이렇게 간편하게 서버를 배포할 수 있다는 것을 일찍 알았다면.. Heroku 덕분에 1학기 발표를 성공적으로 마무리 할 수 있었다. Heroku에 감사하고 다음번에는 AWS로 배포를 도전해 봐야겠다.
+

@@ -1,0 +1,234 @@
+---
+title: '[TML] - Nest에서 FormData를 이용해 전송받은 이미지와 데이터 처리하기'
+date: '2023-06-08'
+tags: ['TML']
+draft: false
+summary: 'Nest 프레임워크에서 클라이언트에서 받은 이미지와 데이터 처리하기'
+---
+
+공유 오피스를 등록하고 예약하는 프로젝트에서 회의실 등록을 위한 API를 구현하던 중 이미지와 데이터를 같이 전송하는 방법과 Nest 프레임워크에서 이 요청을 처리하는 방법에 대해 고민이 많았다. 구글에 어떤 키워드로 검색해야 할지 몰라 헤매다가 트레이닝 강사님께 조언을 얻어 보고 시도해 본 결과를 공유해 보려고 한다.
+(이미지는 S3에 저장되고 경로만 DB에 저장)
+
+### 준비물
+>- Nest.js - MVC와 Repository 패턴을 준수한 디렉토리(...)
+>- Postman
+>- VS Code
+>- S3 (S3에 이미지를 저장하고 DB에는 이미지 경로만 저장)
+
+![](https://velog.velcdn.com/images/mintmin0320/post/3b3b35f5-a344-463a-8275-d29cb9be2f0c/image.png)
+
+위 사진과 같이 공유 오피스를 등록하는 기능을 만드는 것이 목적이다. ( 아직 프론트 미완성으로 Postman을 사용 )
+## Multer
+```
+npm i -D @types/multer
+```
+- Express에서 파일 업로드 관련 모듈을 제공해주는 패키지
+- 요청과 핸들러 사이에서 파일을 처리하는 미들웨어
+- 기본적으로 Nest에 내장되어 있어 타입스크립트 명시
+
+<br/>
+
+
+## Controller
+```
+controller.ts
+
+import { Body, Controller, Get, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { CreateReservationDto } from '../dto/create-reservation.dto';
+import { ReservationService } from '../services/reservation.service';
+import { FileInterceptor } from '@nestjs/platform-express';
+
+@Controller('reservation')
+export class ReservationController {
+  constructor(
+    private readonly reservationService: ReservationService,
+  ) { }
+
+  @Post('set-office')
+  @UseInterceptors(FileInterceptor('image'))
+  async create(@UploadedFile() file: Express.Multer.File, @Body() reservationDto: CreateReservationDto) {
+    return await this.reservationService.create('reservation', file, reservationDto);
+  }
+}
+```
+
+주요 코드만 살펴보면
+```
+@UseInterceptors(FileInterceptor('image'))
+```
+ FileInterceptor('file')
+- 컨트롤러에 인터셉터 적용을 위해 @UseInterceptors 데코레이션을 사용 
+- 하나의 파일을 받을때 사용하는 인터셉터
+- 첫 번째 file 변수의 파일 정보를 받아 온다.
+- ('file')의 경우 프론트에서 전송할 떄 FormData에서 설정한 name과 동일해야 함
+( 프론트에서 'image'로 보낼 경우 'image'로 무조건 적어줘야 함 )
+- 여러 개의 이미지를 받으려면 FilesInterceptor를 사용
+
+<br/>
+
+```
+  async create(@UploadedFile() file: Express.Multer.File, @Body() reservationDto: CreateReservationDto) {
+    return await this.reservationService.create('reservation', file, reservationDto);
+  }
+```
+- file의 타입은 Express.Multer.File
+- CreateReservationDto에는 회의실명, 지역, 비용 등의 정보
+![](https://velog.velcdn.com/images/mintmin0320/post/d5c9c8cc-c24c-4417-909a-ef6f2337a3e1/image.png)
+
+```
+this.reservationService.create('reservation', file, reservationDto);
+```
+서비스에 create함수로 넘기는 인자
+- 'reservation'
+이미지를 AWS S3에 저장하고 있기 때문에 저장되는 이미지를 담는 버킷 폴더명을 지정하는 역할을 수행
+
+file
+- 클라이언트에서 전달받을 이미지 정보가 담긴 파일
+
+reservationDto 
+- 회의실 전화번호, 지역, 가격 등의 정보
+
+## Service
+
+```
+service.ts
+
+import { BadRequestException, Injectable } from '@nestjs/common';
+import * as AWS from 'aws-sdk';
+import * as path from 'path';
+
+import { ReservationRepository } from '../repository/reservation.repository';
+import { CreateReservationDto } from './../dto/create-reservation.dto';
+
+
+@Injectable()
+export class ReservationService {
+  private readonly awsS3: AWS.S3;
+  public readonly S3_BUCKET_NAME: string
+
+  constructor(
+    private readonly reservationRepository: ReservationRepository
+  ) {
+    this.awsS3 = new AWS.S3({
+      accessKeyId: process.env.AWS_S3_ACCESS_KEY,
+      secretAccessKey: process.env.AWS_S3_SECRET_KEY,
+      region: process.env.AWS_S3_REGION,
+    });
+    this.S3_BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME;
+  }
+
+  async create(folder: string, file: Express.Multer.File, reservationDto: CreateReservationDto) {
+    try {
+      const key = `${folder}/${Date.now()}_${path.basename(
+        file.originalname,
+      )}`.replace(/ /g, '');
+
+      await this.awsS3
+        .putObject({
+          Bucket: this.S3_BUCKET_NAME,
+          Key: key,
+          Body: file.buffer,
+          ACL: 'public-read',
+          ContentType: file.mimetype,
+        })
+        .promise();
+
+      const imgUrl = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${key}`;
+
+      const result = await this.reservationRepository.create(imgUrl, reservationDto);
+
+      return result;
+    } catch (error) {
+      throw new BadRequestException(`File upload failed : ${error}`);
+    }
+  }
+}
+```
+
+이미지를 S3로 저장하는 코드는 생략하고 집중적으로 봐야 할 부분은 imgUrl과 reservationDto을 reservationRepository에 create로 인자를 전달하는 부분이다.
+```
+const result = await this.reservationRepository.create(imgUrl, reservationDto);
+```
+imgUrl
+- 이미지가 저장된 경로
+
+reservationDto
+- 회의실 전화번호, 지역, 가격 등의 정보
+
+<br/>
+
+## Repository
+```
+repository
+
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Reservation } from '../reservation.schema';
+import { CreateReservationDto } from '../dto/create-reservation.dto';
+
+
+@Injectable()
+export class ReservationRepository {
+  constructor(
+    @InjectModel(Reservation.name) private readonly reservationModel: Model<Reservation>,
+  ) { }
+
+  async create(imgUrl: string, reservationDto: CreateReservationDto) {
+    const { telNum, pay, placeName, decrition, areaName, detailAdress } = reservationDto
+    try {
+      await this.reservationModel.create({ telNum, pay, placeName, decrition, areaName, detailAdress, imgUrl });
+
+      return { result: true, message: "회의실 등록 성공" };
+    } catch (error) {
+      throw new BadRequestException(`File upload failed : ${error}`);
+    }
+  }
+}
+```
+한 줄씩 살펴보자
+```
+async create(imgUrl: string, reservationDto: CreateReservationDto) {
+    const { telNum, pay, placeName, decrition, areaName, detailAdress } = reservationDto
+```
+서비스에서 imgUrl과 reservationDto을 전달받아 reservationDto을 구조 분해 할당하고
+```
+try {
+      await this.reservationModel.create({ telNum, pay, placeName, decrition, areaName, detailAdress, imgUrl });
+
+      return { result: true, message: "회의실 등록 성공" };
+    } catch (error) {
+      throw new BadRequestException(`File upload failed : ${error}`);
+    }
+```
+분해된 객체 데이터와 imgUrl을 create 메소드를 이용해 생성해주면 된다.
+<br/>
+
+## PostMan을 이용한 테스트
+![](https://velog.velcdn.com/images/mintmin0320/post/c3e82ab2-6733-4063-b8f5-54741b69c0d3/image.png)
+(office.jpeg)
+![](https://velog.velcdn.com/images/mintmin0320/post/01d1f8f0-01fb-42c2-9ad0-65e2c6da375f/image.png)회의실 사진을 데이터와 함께 form-data 객체에 담아 서버로 요청을 보낸다.
+![](https://velog.velcdn.com/images/mintmin0320/post/8ef0e8de-7aeb-4e85-9285-33e583246590/image.png)포스트맨을 확인해보면 정상적인 응답을 받았고
+![](https://velog.velcdn.com/images/mintmin0320/post/772d85d0-b3a6-469f-8150-911aeb55ac90/image.png)DB에서도 정상적으로 데이터가 저장됐다.
+![](https://velog.velcdn.com/images/mintmin0320/post/a7994760-afa9-4174-868f-371e56dc8f2d/image.png)이미지 경로도 정상적으로 접속돼 확인이 가능하다 ( 이상해 보이지만 정상이다.. )
+<br/>
+
+## 후기
+프로필 사진 기능 구현을 위해 이미지만 업로드는 해봤지만 데이터와 이미지를 넘기는 방법은 처음 사용해 봤기 때문에 포스팅하기에 좋은 주제라고 생각해 포스팅 하게 됐다. 구글에 어떤 키워드로 검색을 해야 할지 몰라서 그런지는 몰라도 원하는 검색 결과가 나오지는 않았기 때문에 같은 고민을 하는 분들에게 도움이 되었으면 좋겠다. 
+(도움을 주신 존 안 강사님 감사합니다..)
+야간 수업이 끝나고.. 1시가 조금 넘었지만 오늘은 꼭 포스팅을 하겠다고 다짐했기 때문에 졸음을 참으며 글을 작성하고 있다. 포스팅을 할 때마다 느끼는 건 생각보다 뿌듯하고 보람차다 앞으로도 모르는 내용이나 기록할 만한 내용이 생긴다면 또 포스팅을 하겠다는 다짐을 하며 내일 부캠을 위해 글을 마치겠다!
+<br/>
+<br/>
+
+
+
+## 🚀Error Report
+
+1. 처음 이미지 파일과 데이터를 어떻게 입력받아야 할지 고민을 많이 했다. 처음 시도한 방법은 form으로 이미지와 데이터를 모두 전달받는 방법을 시도했지만 오류가 발생했다. 결국 조언을 받고 알아낸 방법은 formdata.append로 key, value 형태로 데이터를 추가하면 간단하게 해결할 수 있었다.<br/> ( ex. formdata.append(placeName: "동양 회의실") )
+
+
+2. create() 안에 { }(중괄호)를 생략해서 오류가 발생했었다. . .
+```
+await this.reservationModel.create( telNum, pay, placeName, decrition, areaName, detailAdress, imgUrl);
+```
+
