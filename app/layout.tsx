@@ -80,10 +80,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ThemeProviders>
             <Analytics analyticsConfig={siteMetadata.analytics as AnalyticsConfig} />
             {/* SectionContainer 컴포넌트 css 수정하기  */}
-            {/* <div className="w-60 mt-20 fixed h-full top-0">
-              <img src="../static/images/banner.jpeg" />
-            </div> */}
-            <div className="ml-60 flex w-full h-screen flex-col justify-between font-sans">
+            <div className="flex w-full h-screen flex-col justify-between font-sans">
               <SearchProvider searchConfig={siteMetadata.search as SearchConfig}>
                 <Header />
                 <main className="mb-auto">{children}</main>
