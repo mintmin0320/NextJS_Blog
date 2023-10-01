@@ -79,7 +79,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
       />
       <link rel="alternate" type="application/rss+xml" href="/feed.xml" />
-      <body className="text-black antialiased dark:bg-gray-950 dark:text-white bg-gray-500 relative">
+      <body className="text-black antialiased dark:bg-gray-950 dark:text-white bg-gray-300 relative">
         <Video />
         <ScrollProgressBar />
         <ThemeProviders>
