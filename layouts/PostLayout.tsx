@@ -57,7 +57,7 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
           </header>
           <div className="flex flex-col pb-8 divide-y divide-gray-200 dark:divide-gray-700 xl:flex xl:flex-row xl:divide-x xl:divide-y-0">
             <div className="divide-y divide-gray-200 dark:divide-gray-700 flex-grow xl:flex-grow-0 xl:pb-0">
-              <div className="text-white prose max-w-none pb-8 pt-10 dark:prose-invert">
+              <div className="text-black dark:text-white prose max-w-none pb-8 pt-10 dark:prose-invert">
                 {children}
               </div>
               {siteMetadata.comments && (
