@@ -3092,6 +3092,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/json-schema@npm:^7.0.5":
+  version: 7.0.13
+  resolution: "@types/json-schema@npm:7.0.13"
+  checksum: 345df21a678fa72fb389f35f33de77833d09d4a142bb2bcb27c18690efa4cf70fc2876e43843cefb3fbdb9fcb12cd3e970a90936df30f53bbee899865ff605ab
+  languageName: node
+  linkType: hard
+
 "@types/json5@npm:^0.0.29":
   version: 0.0.29
   resolution: "@types/json5@npm:0.0.29"
@@ -3469,6 +3476,15 @@ __metadata:
     clean-stack: ^2.0.0
     indent-string: ^4.0.0
   checksum: 1101a33f21baa27a2fa8e04b698271e64616b886795fd43c31068c07533c7b3facfcaf4e9e0cab3624bd88f729a592f1c901a1a229c9e490eafce411a8644b79
+  languageName: node
+  linkType: hard
+
+"ajv-keywords@npm:^3.5.2":
+  version: 3.5.2
+  resolution: "ajv-keywords@npm:3.5.2"
+  peerDependencies:
+    ajv: ^6.9.1
+  checksum: 7dc5e5931677a680589050f79dcbe1fefbb8fea38a955af03724229139175b433c63c68f7ae5f86cf8f65d55eb7c25f75a046723e2e58296707617ca690feae9
   languageName: node
   linkType: hard
 
@@ -3854,6 +3870,13 @@ __metadata:
   version: 1.6.51
   resolution: "big-integer@npm:1.6.51"
   checksum: 3d444173d1b2e20747e2c175568bedeebd8315b0637ea95d75fd27830d3b8e8ba36c6af40374f36bdaea7b5de376dcada1b07587cb2a79a928fccdb6e6e3c518
+  languageName: node
+  linkType: hard
+
+"big.js@npm:^5.2.2":
+  version: 5.2.2
+  resolution: "big.js@npm:5.2.2"
+  checksum: b89b6e8419b097a8fb4ed2399a1931a68c612bce3cfd5ca8c214b2d017531191070f990598de2fc6f3f993d91c0f08aa82697717f6b3b8732c9731866d233c9e
   languageName: node
   linkType: hard
 
@@ -4784,6 +4807,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"emojis-list@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "emojis-list@npm:3.0.0"
+  checksum: ddaaa02542e1e9436c03970eeed445f4ed29a5337dfba0fe0c38dfdd2af5da2429c2a0821304e8a8d1cadf27fdd5b22ff793571fa803ae16852a6975c65e8e70
+  languageName: node
+  linkType: hard
+
 "encoding@npm:^0.1.13":
   version: 0.1.13
   resolution: "encoding@npm:0.1.13"
@@ -5529,6 +5559,18 @@ __metadata:
   dependencies:
     flat-cache: ^3.0.4
   checksum: f49701feaa6314c8127c3c2f6173cfefff17612f5ed2daaafc6da13b5c91fd43e3b2a58fd0d63f9f94478a501b167615931e7200e31485e320f74a33885a9c74
+  languageName: node
+  linkType: hard
+
+"file-loader@npm:^4.2.0":
+  version: 4.3.0
+  resolution: "file-loader@npm:4.3.0"
+  dependencies:
+    loader-utils: ^1.2.3
+    schema-utils: ^2.5.0
+  peerDependencies:
+    webpack: ^4.0.0
+  checksum: a005ac5599e96631e8ead32db874283ef821c121e93997b0d6f853db1284bcd7832e1ac59d39a21c201de22b6e33146996c28bd8c486893a5191c334a00f61b2
   languageName: node
   linkType: hard
 
@@ -6982,7 +7024,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"json5@npm:^1.0.2":
+"json5@npm:^1.0.1, json5@npm:^1.0.2":
   version: 1.0.2
   resolution: "json5@npm:1.0.2"
   dependencies:
@@ -7167,6 +7209,17 @@ __metadata:
     lit-element: ^3.3.0
     lit-html: ^2.7.0
   checksum: 984a7fb9c0fa387f20177a07de22ea1c9cdc01a7dc7cb1c400d1df5b43a8956908460482a3259ea173555c6f0f13457d2ddc5c84d4c365007afd86e7ca58b384
+  languageName: node
+  linkType: hard
+
+"loader-utils@npm:^1.2.3":
+  version: 1.4.2
+  resolution: "loader-utils@npm:1.4.2"
+  dependencies:
+    big.js: ^5.2.2
+    emojis-list: ^3.0.0
+    json5: ^1.0.1
+  checksum: eb6fb622efc0ffd1abdf68a2022f9eac62bef8ec599cf8adb75e94d1d338381780be6278534170e99edc03380a6d29bc7eb1563c89ce17c5fed3a0b17f1ad804
   languageName: node
   linkType: hard
 
@@ -8390,6 +8443,15 @@ __metadata:
     react: "*"
     react-dom: "*"
   checksum: ebc248b956138e73436c4ed0a0f0a877a0a48a33156db577029b8b8469e48b5c777d61abf2baeb75953378febea74e067a4869ff90b4a3e94fce123289b862ba
+  languageName: node
+  linkType: hard
+
+"next-videos@npm:^1.4.1":
+  version: 1.5.0
+  resolution: "next-videos@npm:1.5.0"
+  dependencies:
+    file-loader: ^4.2.0
+  checksum: c9c6cbac8de08fe36c1fa91f32c3842a0fcf89cb5bfba0298f61ef436c270baf3b4d0c3afcaa8416277831759ad1ac0f60a976705937ffbebdbce134f156ebc1
   languageName: node
   linkType: hard
 
@@ -10169,6 +10231,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"schema-utils@npm:^2.5.0":
+  version: 2.7.1
+  resolution: "schema-utils@npm:2.7.1"
+  dependencies:
+    "@types/json-schema": ^7.0.5
+    ajv: ^6.12.4
+    ajv-keywords: ^3.5.2
+  checksum: 32c62fc9e28edd101e1bd83453a4216eb9bd875cc4d3775e4452b541908fa8f61a7bbac8ffde57484f01d7096279d3ba0337078e85a918ecbeb72872fb09fb2b
+  languageName: node
+  linkType: hard
+
 "section-matter@npm:^1.0.0":
   version: 1.0.0
   resolution: "section-matter@npm:1.0.0"
@@ -10726,6 +10799,7 @@ __metadata:
     next: 13.4.19
     next-contentlayer: 0.3.4
     next-themes: ^0.2.1
+    next-videos: ^1.4.1
     pliny: 0.1.2
     postcss: ^8.4.24
     prettier: ^3.0.0

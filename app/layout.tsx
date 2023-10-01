@@ -11,6 +11,7 @@ import siteMetadata from '@/data/siteMetadata'
 import { ThemeProviders } from './theme-providers'
 import { Metadata } from 'next'
 import ScrollProgressBar from '@/components/ScrollProgressBar'
+import Video from '@/components/Video'
 
 const space_grotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -78,12 +79,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
       />
       <link rel="alternate" type="application/rss+xml" href="/feed.xml" />
-      <body className="bg-white text-black antialiased dark:bg-gray-950 dark:text-white bg-zinc-100 w-full overflow-x-hidden">
+      <body className="text-black antialiased dark:bg-gray-950 dark:text-white bg-gray-500 relative">
+        <Video />
         <ScrollProgressBar />
         <ThemeProviders>
           <Analytics analyticsConfig={siteMetadata.analytics as AnalyticsConfig} />
           <SectionContainer>
-            <div className="flex h-screen flex-col justify-between font-sans">
+            <div className="flex-col justify-between font-sans ">
               <SearchProvider searchConfig={siteMetadata.search as SearchConfig}>
                 <Header />
                 <main className="mb-auto">{children}</main>
