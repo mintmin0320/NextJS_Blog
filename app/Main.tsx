@@ -11,7 +11,7 @@ export default function Home({ posts }) {
   return (
     <div className="flex flex-col">
       <div className="divide-y divide-gray-200 dark:divide-gray-700 flex justify-center">
-        <Image src="/static/images/banner.jpeg" alt="avatar" width={392} height={392} />
+        <Image src="/static/images/banner.jpeg" alt="avatar" width={393} height={393} />
       </div>
       <ScrollTopAndComment />
     </div>
