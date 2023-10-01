@@ -6,14 +6,12 @@ import ThemeSwitch from './ThemeSwitch'
 import SearchButton from './SearchButton'
 
 const Header = () => (
-  <header className="flex items-center justify-around py-10">
-    <div>
+  <header className="flex items-center justify-between p-4">
+    <div className="sm:mb-0">
       <Link href="/" aria-label={siteMetadata.headerTitle}>
         <div className="flex items-center justify-between">
           {typeof siteMetadata.headerTitle === 'string' ? (
-            <div className="hidden h-6 text-2xl font-semibold sm:block">
-              {siteMetadata.headerTitle}
-            </div>
+            <div className="text-lg sm:text-2xl font-semibold">{siteMetadata.headerTitle}</div>
           ) : (
             siteMetadata.headerTitle
           )}

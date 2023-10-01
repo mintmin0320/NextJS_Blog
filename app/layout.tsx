@@ -73,22 +73,25 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <meta name="msapplication-TileColor" content="#000000" />
       <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fff" />
       <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000" />
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      />
       <link rel="alternate" type="application/rss+xml" href="/feed.xml" />
-      <body className="bg-white text-black antialiased dark:bg-gray-950 dark:text-white bg-zinc-100">
+      <body className="bg-white text-black antialiased dark:bg-gray-950 dark:text-white bg-zinc-100 w-full overflow-x-hidden">
         <ScrollProgressBar />
-        <div className="flex w-11/12 mx-auto">
-          <ThemeProviders>
-            <Analytics analyticsConfig={siteMetadata.analytics as AnalyticsConfig} />
-            {/* SectionContainer 컴포넌트 css 수정하기  */}
-            <div className="flex w-full h-screen flex-col justify-between font-sans">
+        <ThemeProviders>
+          <Analytics analyticsConfig={siteMetadata.analytics as AnalyticsConfig} />
+          <SectionContainer>
+            <div className="flex h-screen flex-col justify-between font-sans">
               <SearchProvider searchConfig={siteMetadata.search as SearchConfig}>
                 <Header />
                 <main className="mb-auto">{children}</main>
                 <Footer />
               </SearchProvider>
             </div>
-          </ThemeProviders>
-        </div>
+          </SectionContainer>
+        </ThemeProviders>
       </body>
     </html>
   )
