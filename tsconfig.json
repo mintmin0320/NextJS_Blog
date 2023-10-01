@@ -34,7 +34,7 @@
         "css/*"
       ],
       "contentlayer/generated": [
-        "./contentlayer/generated"
+        "./.contentlayer/generated"
       ]
     },
     "plugins": [
