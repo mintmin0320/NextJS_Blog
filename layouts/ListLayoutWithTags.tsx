@@ -84,14 +84,14 @@ export default function ListLayoutWithTags({
           </h1>
         </div>
         <div className="flex sm:space-x-24">
-          <div className="hidden max-h-screen h-full sm:flex flex-wrap bg-gray-900/70 dark:bg-gray-900/70 pt-5 dark:shadow-gray-800/40 rounded min-w-[280px] max-w-[280px] overflow-auto">
+          <div className="hidden max-h-screen h-full sm:flex flex-wrap bg-gray-200 dark:bg-gray-900/70 pt-5 dark:shadow-gray-800/40 rounded min-w-[280px] max-w-[280px] overflow-auto rounded">
             <div className="py-4 px-6">
               {pathname.startsWith('/blog') ? (
-                <h3 className="text-white font-bold uppercase">카테고리</h3>
+                <h3 className="text-primary-500 text-primary-500 font-bold uppercase">카테고리</h3>
               ) : (
                 <Link
                   href={`/`}
-                  className="font-bold uppercase text-gray-700 dark:text-gray-300 hover:text-primary-500 dark:hover:text-primary-500"
+                  className="font-bold uppercase text-white dark:text-gray-300 hover:text-primary-500 dark:hover:text-primary-500"
                 >
                   go home
                 </Link>
@@ -107,7 +107,7 @@ export default function ListLayoutWithTags({
                       ) : (
                         <Link
                           href={`/tags/${slug(t)}`}
-                          className="py-2 px-3 uppercase text-sm font-medium text-white dark:text-gray-300 hover:text-primary-500 dark:hover:text-primary-500"
+                          className="py-2 px-3 uppercase text-sm font-medium dark:text-gray-300 hover:text-primary-500 dark:hover:text-primary-500"
                           aria-label={`View posts tagged ${t}`}
                         >
                           {`${t} (${tagCounts[t]})`}
@@ -128,14 +128,17 @@ export default function ListLayoutWithTags({
                     <article className="space-y-2 flex flex-col xl:space-y-0">
                       <dl>
                         <dt className="sr-only">Published on</dt>
-                        <dd className="text-base font-medium leading-6 text-white dark:text-gray-400">
+                        <dd className="text-base font-medium leading-6 text-gray-500 dark:text-gray-400">
                           <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
                         </dd>
                       </dl>
                       <div className="space-y-3">
                         <div>
                           <h2 className="text-2xl font-bold leading-8 tracking-tight">
-                            <Link href={`/${path}`} className="text-gray-900 dark:text-gray-100">
+                            <Link
+                              href={`/${path}`}
+                              className="text-gray-900 dark:text-gray-100 hover:text-primary-500  dark:hover:text-primary-500"
+                            >
                               {title}
                             </Link>
                           </h2>
@@ -143,9 +146,7 @@ export default function ListLayoutWithTags({
                             {tags?.map((tag) => <Tag key={tag} text={tag} />)}
                           </div>
                         </div>
-                        <div className="prose max-w-none text-white dark:text-gray-400">
-                          {summary}
-                        </div>
+                        <div className="prose max-w-none dark:text-gray-300">{summary}</div>
                       </div>
                     </article>
                   </li>

@@ -22,15 +22,15 @@ const ScrollProgressBar = () => {
 
   const setProgressColor = (progress: number) => {
     if (progress <= 40) {
-      return 'bg-violet-300'
+      return 'bg-primary-300 dark:text-white'
     }
 
     if (progress <= 75) {
-      return 'bg-violet-400'
+      return 'bg-primary-400'
     }
 
     if (progress > 75) {
-      return 'bg-violet-500'
+      return 'bg-primary-500'
     }
   }
 

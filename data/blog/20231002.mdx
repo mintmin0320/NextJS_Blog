@@ -1,12 +1,14 @@
 ---
-title: '블로그 배경 변경 + 잡다한 UI 업데이트'
+title: '블로그 배경 동영상으로 변경 해보기  + 잡다한 UI 업데이트'
 date: '2023-10-02'
 tags: ['블로그_커스텀']
 draft: false
-summary: '내 입맛대로 블로그를 만들어보자'
+summary: 'Next13 환경의 블로그 배경을 동영상으로 변경하는 실습을 해보자.'
 ---
 
-해야 할 일들이 많지만 새벽에 내가 만든 블로그를 둘러보다가 너무 개성 없고 밋밋하다는 느낌을 받았다. 망설이지 않고 커스텀을 진행했으나 온갖 방해물을 만나며 고생했던 기록을 정리해 볼까 한다.
+> - video 태그 다뤄보기
+> - 테일윈드 CSS 사용 연습하기
+> - next.js에서 동영상 사용하는 방법 공부하기
 
 <br/><br/>
 
@@ -46,7 +48,7 @@ module.exports = withVideos()
 
 ![](https://velog.velcdn.com/images/mintmin0320/post/ea260bd5-c204-482b-a447-d24402b68a4c/image.png)
 
-수정한 적도 없는 코드들이 말썽을 부리기 시작했다. 본인들은 수정해 주지 않아서 서운했던 것일까
+수정한 적도 없는 코드들이 말썽을 부리기 시작했다.
 
 > Module not found: Package path ./generated is not exported from package /vercel/path0/node_modules/contentlayer (see exports field in /vercel/path0/node_modules/contentlayer/package.json)
 
@@ -58,7 +60,7 @@ module.exports = withVideos()
 
 <br/>
 
-## 에러 해결의 순간은 우연에서부터..  
+## 에러 해결의 순간은 우연에서부터 시작된다.
 
 ![](https://velog.velcdn.com/images/mintmin0320/post/fd3ecfb4-d843-4db5-a1a1-57966849bde9/image.png)
 
@@ -78,16 +80,18 @@ const ContentSecurityPolicy = `
 
 <br/><br/>
 
+# 결과 화면
+
+![](https://velog.velcdn.com/images/mintmin0320/post/5c72c8b4-8996-4a65-b817-1db03692104c/image.png)
+
+<br/><br/>
+
 # 후기
 이제 내 블로그에서 곧 다가올 계절처럼 눈이 내린다~! 예전에 next.js를 공부할 겸 토이 프로젝트로 두 번 사용해 본 경험이 있는데 이번 블로그 커스텀을 진행하며 새로운 버전인 next13과 템플릿이라는 어려움도 존재하긴 하지만 내가 아직 next.js를 제대로 이해하고 사용하지 못하고 있다고 생각한다. 앞으로도 원활한 블로그 커스텀을 진행을 위해 더 공부하고 정리하며 나만의 개성 있는 블로그를 만들기 위해 발전하자!
 
 ![](https://velog.velcdn.com/images/mintmin0320/post/4c8e3cea-7206-4daa-9451-eab0491df5ee/image.png)
 
-에러가 계속 발생했을 때마다 육성으로 비명을 질렀다.
-
-![](https://velog.velcdn.com/images/mintmin0320/post/411d2bdc-7bf9-4b20-a840-2d545a22344e/image.png)
-
-마지막 배포 때는 1분 50초 동안 기도했다...
+배포 실패의 흔적
 
 <br/><br/>
 
