@@ -3,7 +3,7 @@ const siteMetadata = {
   title: '취준생 민트민',
   author: '민트민',
   headerTitle: '취준생 민트민',
-  description: '"JS 그거 어떻게 하는 건데."',
+  description: '최신글',
   language: 'ko',
   theme: 'system', // system, dark or light
   siteUrl: 'https://tailwind-nextjs-starter-blog.vercel.app',
