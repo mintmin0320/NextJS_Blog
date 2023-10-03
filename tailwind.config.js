@@ -15,6 +15,9 @@ module.exports = {
   darkMode: 'class',
   theme: {
     extend: {
+      animation: {
+        pulseAnimation: 'pulseAnimation 3s infinite',
+      },
       lineHeight: {
         11: '2.75rem',
         12: '3rem',

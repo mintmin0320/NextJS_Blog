@@ -91,7 +91,7 @@ export default function ListLayoutWithTags({
               ) : (
                 <Link
                   href={`/`}
-                  className="font-bold uppercase text-white dark:text-gray-300 hover:text-primary-500 dark:hover:text-primary-500"
+                  className="font-bold uppercase text-primary-500 dark:text-primary-500 hover:text-black dark:hover:text-white"
                 >
                   go home
                 </Link>

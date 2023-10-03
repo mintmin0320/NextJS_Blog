@@ -6,14 +6,17 @@ import NewsletterForm from 'pliny/ui/NewsletterForm'
 import ScrollTopAndComment from '@/components/ScrollTopAndComment'
 import Image from '@/components/Image'
 
+import 'css/tailwind.css'
+import Skill from '@/components/Skill'
+
 // 메인 페이지 표시할 post 갯수 지정
 const MAX_DISPLAY = 3
 
 export default function Home({ posts }) {
   return (
     <div className="flex flex-col items-center">
-      <div className="w-full flex justify-between pt-6">
-        <div className="w-2/6 py-6 flex-col items-center hidden md:flex">
+      <div className="w-full flex justify-between pt-6 justify-between">
+        <div className="w-2/6 py-6 flex-col items-center hidden md:flex  border border-gray-300 rounded-md">
           <Image
             src="/static/images/mintmin.jpg"
             alt=""
@@ -23,14 +26,14 @@ export default function Home({ posts }) {
             priority
           />
           <p className="w-8/12 flex justify-center pt-2 font-bold text-2xl ">프론트엔드</p>
-          <p className="w-8/12 flex justify-center pt-1">JS | TS | React | Next | Nest</p>
-          <div className="w-8/12 flex justify-center pt-4">
+          <Skill />
+          <div className="w-8/12 flex justify-center pt-11">
             <a href="https://hits.seeyoufarm.com">
               <img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fmintmin-dev-world.vercel.app&count_bg=%23F43F5E&title_bg=%23555555&icon=&icon_color=%23F43F5E&title=hits&edge_flat=false" />
             </a>
           </div>
         </div>
-        <div className="w-full md:w-4/6">
+        <div className="w-full md:w-3/6">
           <div className="space-y-2 pb-8 pt-6 md:space-y-5">
             <p className="text-2xl leading-7 text-gray-600 dark:text-gray-200">
               {siteMetadata.description}
@@ -50,7 +53,7 @@ export default function Home({ posts }) {
                             <h2 className="text-2xl font-bold leading-8 tracking-tight w-full ">
                               <Link
                                 href={`/blog/${slug}`}
-                                className="text-gray-900 dark:text-gray-100"
+                                className="text-gray-900 hover:text-primary-500 dark:text-gray-100 hover:dark:text-primary-500"
                               >
                                 {title}
                               </Link>
