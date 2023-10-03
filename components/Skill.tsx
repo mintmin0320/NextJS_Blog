@@ -2,7 +2,7 @@ import React from 'react'
 
 const Skill = () => {
   return (
-    <div className="w-8/12 flex justify-center pt-3">
+    <div className="w-8/12 flex justify-center pt-6">
       <img
         width="50"
         src="https://user-images.githubusercontent.com/25181517/117447155-6a868a00-af3d-11eb-9cfe-245df15c9f3f.png"

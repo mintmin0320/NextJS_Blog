@@ -15,6 +15,9 @@ module.exports = {
   darkMode: 'class',
   theme: {
     extend: {
+      boxShadow: {
+        custom: '0px 4px 6px rgba(0, 0, 0, 0.1)',
+      },
       animation: {
         pulseAnimation: 'pulseAnimation 3s infinite',
       },
