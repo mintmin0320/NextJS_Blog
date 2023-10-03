@@ -17,9 +17,10 @@ export default function Home({ posts }) {
           <Image
             src="/static/images/mintmin.jpg"
             alt=""
-            width={100}
-            height={100}
-            className="h-60 w-8/12 object-cover rounded-full"
+            width={150}
+            height={150}
+            className="h-60 w-60 object-cover rounded-full"
+            priority
           />
           <p className="w-8/12 flex justify-center pt-2 font-bold text-2xl ">프론트엔드</p>
           <p className="w-8/12 flex justify-center pt-1">JS | TS | React | Next | Nest</p>
