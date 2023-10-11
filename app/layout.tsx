@@ -79,7 +79,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
       />
       <link rel="alternate" type="application/rss+xml" href="/feed.xml" />
-      <body className="text-black antialiased dark:bg-gray-800 dark:text-white bg-zinc-100 w-full">
+      <body className="text-black antialiased dark:bg-gray-800 dark:text-white bg-zinc-100 w-10/12 mx-auto">
         <ScrollProgressBar />
         <ThemeProviders>
           <Analytics analyticsConfig={siteMetadata.analytics as AnalyticsConfig} />

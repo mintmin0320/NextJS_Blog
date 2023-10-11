@@ -16,16 +16,15 @@ export default function Home({ posts }) {
   return (
     <div className="flex flex-col items-center">
       <div className="w-full flex justify-between pt-6 justify-between">
-        <div className="w-2/6 py-6 flex-col items-center hidden md:flex  border border-gray-300 rounded-md shadow-custom">
+        <div className="md:w-1/5 py-6 flex-col items-center hidden md:flex  border border-gray-300 rounded-md shadow-custom">
           <Image
             src="/static/images/mintmin.jpg"
             alt=""
             width={150}
             height={150}
-            className="h-60 w-60 object-cover"
+            className="h-50 w-50 object-cover rounded-full"
             priority
           />
-          <p className="w-8/12 flex justify-center pt-3 font-bold text-2xl">민트민의 개발 블로그</p>
           <Skill />
           <div className="w-8/12 flex justify-center pt-9">
             <a href="https://hits.seeyoufarm.com">
@@ -33,7 +32,7 @@ export default function Home({ posts }) {
             </a>
           </div>
         </div>
-        <div className="w-full md:w-3/6">
+        <div className="md:w-3/5">
           <div className="space-y-2 pb-8 pt-6 md:space-y-5">
             <p className="text-2xl leading-7 text-gray-600 dark:text-gray-200">
               {siteMetadata.description}
