@@ -79,12 +79,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
       />
       <link rel="alternate" type="application/rss+xml" href="/feed.xml" />
-      <body className="text-black antialiased dark:bg-gray-800 dark:text-white bg-zinc-100 w-10/12 mx-auto">
+      <body className="text-black antialiased dark:bg-gray-800 dark:text-white bg-zinc-100 w-full bg-red-500 mx-auto">
         <ScrollProgressBar />
         <ThemeProviders>
           <Analytics analyticsConfig={siteMetadata.analytics as AnalyticsConfig} />
           <SectionContainer>
-            <div className="flex-col justify-between font-sans ">
+            <div className="flex-col justify-between font-sans">
               <SearchProvider searchConfig={siteMetadata.search as SearchConfig}>
                 <Header />
                 <main className="mb-auto">{children}</main>

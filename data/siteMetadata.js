@@ -1,9 +1,9 @@
 /** @type {import("pliny/config").PlinyConfig } */
 const siteMetadata = {
-  title: '👨🏻‍💻 민트민의 개발 블로그',
+  title: '민트민의 개발 블로그',
   author: '민트민',
   headerTitle: '👨🏻‍💻 개발 블로그',
-  description: '최신글',
+  description: '최근 글',
   language: 'ko',
   theme: 'system', // system, dark or light
   siteUrl: 'https://tailwind-nextjs-starter-blog.vercel.app',
