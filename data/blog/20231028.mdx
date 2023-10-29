@@ -1,0 +1,175 @@
+---
+title: '기존 로그인/회원가입 컴포넌트 리팩토링 진행기'
+date: '2023-10-30'
+tags: ['COMMA']
+draft: false
+summary: 'React Hook Form 적용하기'
+---
+
+기존 COMMA 프로젝트 - Login 컴포넌트의 경우 코드가 401 줄로 유지/보수/가독성 측면에서 최악의 코드를 작성했다고 생각한다. 실제로 styled-components와 함수 코드들이 합쳐져 수정 소요가 발생했을 때 고생했던 기억이 있다.
+
+## 개선 목표
+1. API 요청 함수 분리
+- 로그인 요청 함수를 따로 hook으로 분리
+- useMutation을 적용해 Login 컴포넌트에 주입
+
+```
+// page > LoginPage
+
+export default function LoginPage() {
+  const signIn = useSignIn();
+
+  return (
+    <Container>
+      <Logo />
+      <LoginForm
+        signIn={signIn}
+      />
+    </Container>
+  );
+};
+```
+LoginForm 컴포넌트에 signIn hook을 주입해 LoginForm에 signIn hook을 의존성 주입해 결합도를 낮추게 했다.
+
+<br/>
+
+2. styled-comments 코드 분리
+- 기존 styled-comments 코드가 컴포넌트 내에서 가독성을 해친다고 생각했고 따로 style 파일을 만들어 분리 작업을 진행했다.
+
+<br/>
+
+3. react-hook-form 적용
+> 💡 적용을 고민한 이유
+- 🖐️ 데이터 유효성 검증을 지원 및 가독성의 이점
+기존에는 state 값을 검증하기 위해 switch 문을 사용해 데이터 타입을 검증했고 지금 생각해 봐도 매우 비효율적인 코드 로직과 방법이라고 생각한다.
+
+```
+// 입력값이 변할 때
+const _handleInputChange = (e) => {
+  switch (e.target.name) {
+    case 'userId':
+      if (regEng.test(e.target.value)) {
+        setState({
+          ...state,
+          idValidation: '',
+          validation: true,
+          [e.target.name]: e.target.value
+        });
+      } else {
+        console.log("특수문자를 제외한 아이디만 입력해주세요.");
+        setState({
+          ...state,
+          validation: false,
+          idValidation: '5~15자의 영문과 숫자만 입력해주세요.',
+          [e.target.name]: e.target.value
+        });
+      } break;
+    case 'userPw':
+      if (regPw.test(e.target.value)) {
+        console.log("올바른 비밀번호 형식입니다.");
+        setState({
+          ...state,
+          validationPw: true,
+          pwValidation: '',
+          [e.target.name]: e.target.value
+        });
+      } else {
+        console.log("비밀번호만 입력해주세요.");
+        setState({
+          ...state,
+          validationPw: false,
+          pwValidation: '잘못된 형식입니다.',
+          [e.target.name]: e.target.value
+        });
+      } break;
+    default:
+  }
+};
+```
+
+### react-hook-form을 적용한 코드
+
+```
+<S.LoginContainer>
+  <S.Wrap>
+    <S.Form onSubmit={onSubmit}>
+      <S.InputBox style={{ borderBottom: 'none' }}>
+        <S.IconBox>
+          <HiUser size='22px' />
+        </S.IconBox>
+        <S.Input
+          type='text'
+          placeholder='ID'
+          {...register('accountId', {
+            required: 'Required',
+            pattern: {
+              value: /^[a-zA-Z0-9]+$/,
+              message: '영문과 숫자 조합만 사용해 주세요.'
+            }
+          })}
+        />
+        </S.InputBox>
+ ... 기타 코드
+```
+
+가독성도 떨어지고 react-hook-form 자체에서 기능을 지원하므로 주저없이 선택하게 되었다.
+
+<br/>
+
+- 🖐️ 성능
+hook-form을 적용할 경우 리렌더링이 처음에만 발생하고 watch 옵션을 사용하지 않는다면 그 뒤로는 발생하지 않는다. 관련 아티클을 읽고 직접 테스트를 진행해 봤다.
+
+
+<br/>
+
+## React Dev Tools에서 Highlight updates when components render로 테스트를 진행
+
+<br/>
+
+### hook-form 적용
+
+![화면-기록-2023-10-27-오후-11 13 39](https://github.com/mintmin0320/COMMA_REFACTORING/assets/114549939/52ee48df-0c56-45b3-9265-cdd8804f46a8)
+
+### hook-form 미적용
+ 
+![화면-기록-2023-10-27-오후-10 44 32](https://github.com/mintmin0320/COMMA_REFACTORING/assets/114549939/d1299888-31cf-4ab4-bc6b-1b86706e6149)
+
+
+<br/>
+
+> 📌 특이사항
+
+비슷한 로직으로 회원가입 컴포넌트를 작성하던 중 이메일 인증 요청, 인증 코드 확인 작업에 email, code 값이 필요했고 onSubmit 이벤트가 발동해야지만 유효성 검증이 가능했기 때문에 값 변경 확인을 위해 watch 옵션을 사용했고 trigger 옵션을 적용해 유효하지 않은 형식일 경우 메시지와 함께 요청이 실행되지 않도록 코드를 작성했다.
+
+```
+const email = watch('email');
+const code = watch('code');
+
+// 이메일 인증 코드 요청
+const handleAuthCode = async () => {
+  if (!await trigger('email')) {
+    toast.warning('유효하지 않은 형식');
+
+    return;
+  }
+
+  try {
+    const data = await reqAuthCode.mutateAsync(email);
+
+    if (data === 200) {
+      setIsRequestAuthCode(true);
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
+```
+
+### 유효성 검증 적용 화면
+![](https://velog.velcdn.com/images/mintmin0320/post/edf26259-e1bb-4c0c-af08-e8637555842f/image.png)
+
+<br/>
+
+로그인 페이지 작업을 진행하던 중  react-hook-form, formik, rc-field-form 라이브러리 비교 아티클을 보게 되었고 평소 react-hook-form을 들어본 경험이 있어 곧바로 프로젝트에 적용해 보게 되었다. 기존보다 코드도 간결해 지고 입력된 데이터 유효성 검사 기능도 제공하기 때문에 성능, 가독성 면에서 큰 이점이 있다고 생각해 적용하게 되었다. 
+
+여러 라이브러리가 존재하고 내가 필요한 기능은 웬만하면 이미 존재한다고 생각한다. 따라서 내 프로젝트나 학습에서 사용하기 위해 적합한지 판단하고 적재적소에 배치하기 위해 많이 찾아보고 적용해보는 경험이 필요하다는 생각이 들었다.
