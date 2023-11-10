@@ -18,7 +18,9 @@ summary: 'Nest 프레임워크에서 클라이언트에서 받은 이미지와 �
 ![](https://velog.velcdn.com/images/mintmin0320/post/3b3b35f5-a344-463a-8275-d29cb9be2f0c/image.png)
 
 위 사진과 같이 공유 오피스를 등록하는 기능을 만드는 것이 목적이다. ( 아직 프론트 미완성으로 Postman을 사용 )
+
 ## Multer
+
 ```
 npm i -D @types/multer
 ```
@@ -30,6 +32,7 @@ npm i -D @types/multer
 
 
 ## Controller
+
 ```
 controller.ts
 
@@ -53,9 +56,11 @@ export class ReservationController {
 ```
 
 주요 코드만 살펴보면
+
 ```
 @UseInterceptors(FileInterceptor('image'))
 ```
+
  FileInterceptor('file')
 - 컨트롤러에 인터셉터 적용을 위해 @UseInterceptors 데코레이션을 사용 
 - 하나의 파일을 받을때 사용하는 인터셉터
@@ -71,8 +76,10 @@ export class ReservationController {
     return await this.reservationService.create('reservation', file, reservationDto);
   }
 ```
+
 - file의 타입은 Express.Multer.File
 - CreateReservationDto에는 회의실명, 지역, 비용 등의 정보
+
 ![](https://velog.velcdn.com/images/mintmin0320/post/d5c9c8cc-c24c-4417-909a-ef6f2337a3e1/image.png)
 
 ```
@@ -146,9 +153,11 @@ export class ReservationService {
 ```
 
 이미지를 S3로 저장하는 코드는 생략하고 집중적으로 봐야 할 부분은 imgUrl과 reservationDto을 reservationRepository에 create로 인자를 전달하는 부분이다.
+
 ```
 const result = await this.reservationRepository.create(imgUrl, reservationDto);
 ```
+
 imgUrl
 - 이미지가 저장된 경로
 
@@ -158,6 +167,7 @@ reservationDto
 <br/>
 
 ## Repository
+
 ```
 repository
 
@@ -186,31 +196,44 @@ export class ReservationRepository {
   }
 }
 ```
+
 한 줄씩 살펴보자
+
 ```
 async create(imgUrl: string, reservationDto: CreateReservationDto) {
     const { telNum, pay, placeName, decrition, areaName, detailAdress } = reservationDto
+}
 ```
+
 서비스에서 imgUrl과 reservationDto을 전달받아 reservationDto을 구조 분해 할당하고
+
 ```
 try {
-      await this.reservationModel.create({ telNum, pay, placeName, decrition, areaName, detailAdress, imgUrl });
+  await this.reservationModel.create({ telNum, pay, placeName, decrition, areaName, detailAdress, imgUrl });
 
-      return { result: true, message: "회의실 등록 성공" };
-    } catch (error) {
-      throw new BadRequestException(`File upload failed : ${error}`);
-    }
+  return { result: true, message: "회의실 등록 성공" };
+} catch (error) {
+  throw new BadRequestException(`File upload failed : ${error}`);
+}
 ```
+
 분해된 객체 데이터와 imgUrl을 create 메소드를 이용해 생성해주면 된다.
+
 <br/>
 
 ## PostMan을 이용한 테스트
+
 ![](https://velog.velcdn.com/images/mintmin0320/post/c3e82ab2-6733-4063-b8f5-54741b69c0d3/image.png)
+
 (office.jpeg)
 ![](https://velog.velcdn.com/images/mintmin0320/post/01d1f8f0-01fb-42c2-9ad0-65e2c6da375f/image.png)회의실 사진을 데이터와 함께 form-data 객체에 담아 서버로 요청을 보낸다.
+
 ![](https://velog.velcdn.com/images/mintmin0320/post/8ef0e8de-7aeb-4e85-9285-33e583246590/image.png)포스트맨을 확인해보면 정상적인 응답을 받았고
-![](https://velog.velcdn.com/images/mintmin0320/post/772d85d0-b3a6-469f-8150-911aeb55ac90/image.png)DB에서도 정상적으로 데이터가 저장됐다.
-![](https://velog.velcdn.com/images/mintmin0320/post/a7994760-afa9-4174-868f-371e56dc8f2d/image.png)이미지 경로도 정상적으로 접속돼 확인이 가능하다 ( 이상해 보이지만 정상이다.. )
+
+![](https://velog.velcdn.com/images/mintmin0320/post/772d85d0-b3a6-469f-8150-911aeb55ac90/image.png) DB에서도 정상적으로 데이터가 저장됐다.
+
+![](https://velog.velcdn.com/images/mintmin0320/post/a7994760-afa9-4174-868f-371e56dc8f2d/image.png) 이미지 경로도 정상적으로 접속돼 확인이 가능하다 ( 이상해 보이지만 정상이다.. )
+
 <br/>
 
 ## 후기
@@ -227,7 +250,8 @@ try {
 1. 처음 이미지 파일과 데이터를 어떻게 입력받아야 할지 고민을 많이 했다. 처음 시도한 방법은 form으로 이미지와 데이터를 모두 전달받는 방법을 시도했지만 오류가 발생했다. 결국 조언을 받고 알아낸 방법은 formdata.append로 key, value 형태로 데이터를 추가하면 간단하게 해결할 수 있었다.<br/> ( ex. formdata.append(placeName: "동양 회의실") )
 
 
-2. create() 안에 { }(중괄호)를 생략해서 오류가 발생했었다. . .
+2. create() 안에 { }(중괄호)를 생략해서 오류가 발생했었다.
+
 ```
 await this.reservationModel.create( telNum, pay, placeName, decrition, areaName, detailAdress, imgUrl);
 ```
