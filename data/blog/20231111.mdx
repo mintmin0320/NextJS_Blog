@@ -8,7 +8,6 @@ summary: 'Meeti 프로젝트 - 연락처 페이지, React-Query + Suspense 적�
 
 데모 발표를 위해 급하게 프로젝트를 진행하며 생략하거나 놓친 부분을 개선하고자 했는데, 최종 발표를 앞두고 시간적 여유가 생겨 연락처 페이지를 React-Query와 React v18에서 추가된 Suspense을 적용하여 리팩토링을 진행하고자 한다. 연락처 페이지를 최우선으로 선정한 이유는 가장 많은 API를 요청하고 있기 때문에 React-query와 Suspense를 적용하기에 가장 적합하다고 판단했기 때문이다. <br/>
 
-
 <br/>
 
 ![](https://velog.velcdn.com/images/mintmin0320/post/aa9ccb2d-d006-4bf3-913e-f6b3a02e30ef/image.png)
@@ -72,17 +71,16 @@ useEffect(() => {
 ...     
 ```
 
-## 기존 코드의 분석
-4개의 GET 요청 메서드를 useEffect hook으로 처리해 이상 없이 잘 동작했지만 단순하게 동작만 하는 코드를 만들었다는 생각이 든다. <br/>
+## 기존 코드
+- 4개의 GET 요청 메서드를 useEffect hook으로 처리해 이상 없이 잘 동작했지만 단순하게 동작만 하는 코드를 만들었다. <br/>
 
-useEffect를 여러 번 사용해서 API 데이터 목록 요청을 처리했지만 불필요한 코드도 반복되고 데이터가 불필요하게 요청되고 있었다. 가독성과 유지/보수 측면에서 기존보다는 Promise.all을 사용하는 방법이 더 나았을 것 같다는 생각이 든다.
+- 요청이 병렬적으로 처리되고는 있지만, 완료된 순서가 동일하지 않고 먼저 완료된 요청의 결과가 화면에 렌더링 된다. 물론 에러가 아니기 때문에 큰 상관은 없지만 4개의 데이터가 각기 다르게 렌더링 된다면 사용 경험에 방해가 되고 각 데이터가 유기적으로 작동하는 관계라고 생각했기 때문에 병렬 동작 + 동시 렌더링 즉, 요청 결과의 종료 시간과 관계없이 동시에 동작이 종료될 필요가 있다.
 
-<br/>
+- useEffect를 여러 번 사용해서 API 데이터 목록 요청을 처리했지만 불필요한 코드도 반복되고 데이터가 불필요하게 요청되고 있었다. 가독성과 유지/보수 측면에서 기존보다는 Promise.all을 사용하는 방법이 더 나았을 것 같다. <br/>
 
-### 나의 코드 분석 및 성찰
-- 현재 요청이 병렬적으로 처리되고는 있지만, 완료된 순서가 동일하지 않고 먼저 진행된 요청의 결과가 화면에 렌더링 된다. 물론 에러가 아니기 때문에 큰 상관은 없지만 4개의 데이터가 각기 다르게 렌더링 된다면 사용 경험에 방해가 되고 각 데이터가 유기적으로 작동하는 관계라고 생각했기 때문에 병렬 동작 + 동시 렌더링 즉, 요청 결과의 종료 시간과 관계없이 동시에 동작이 종료될 필요가 있다.
+- 비즈니스 로직이 분리 되어있지 않고 연락처/즐겨찾기의 경우 모듈화하면 컴포넌트를 사용할 수 있다. <br/>
 
-<br/>
+- hook을 각 컴포넌트에서 사용해 컴포넌트 간의 의존성을 줄일 필요가 있다. <br/>
 
 - 현재는 적은 양의 데이터로 인해 요청이 빠르게 처리되지만, 연락처의 경우 많은 양의 데이터로 인해 처리 시간이 오래 걸리는 상황이 발생할 수 있다고 생각한다. 따라서 사용자의 대기 시간이 길어지기 때문에 loading indicator 혹은 스켈레톤 UI 적용이 필요하다.  <br/>
 
@@ -165,9 +163,9 @@ function ContactPage() {
 
   return (
     <div>
-      <FavoritesList /> 
+      <ContactList /> 
       // 부모(ContactPage)의 비동기 처리가 끝나지 않으면
-      // 자식 컴포넌트(FavoritesList) 렌더링 발생 x -> 동시성 보장 x
+      // 자식 컴포넌트(ContactList) 렌더링 발생 x -> 동시성 보장 x
     </div>
   )
 }
@@ -184,7 +182,7 @@ const ContactPage = () => {
   return (
     <React.Suspense fallback="Loading">
       <MainContacts />  // 모든 연락처 리스트
-      <FavoritesList />  // 모든 연락처 리스트
+      <ContactList />  // 내 연락처 리스트
     </React.Suspense>
   )
 }
@@ -259,7 +257,6 @@ Suspense + React-Query를 적용해 처음 목표했던 loading indicator 적용
 ```
 <React.Suspense fallback={<SkeletonUI count={3} />}>
   <ContactList />   // 내 연락처 리스트
-  <FavoritesList /> // 즐겨찾는 연락처 리스트
   <FriendRequest /> // 연락처 추가 승인 요청 대기 리스트
   <MainContacts />  // 모든 연락처 리스트
 </React.Suspense>
@@ -316,7 +313,7 @@ const fetchSearchContacts = (username) => ({
 });
 
 
-/* 연락처 리스트 컴포넌트 ContactsPage.js */
+/* 모든 연락처 리스트 컴포넌트 MainContacts.js */
 const { data: allUsers } = useQuery(fetchAllUser(userId));
 const { data: searchResults} = useQuery(
   fetchSearchContacts(keyword),
@@ -378,8 +375,6 @@ React-Query와 Suspense를 테스트 프로젝트에서 사용은 해봤지만 �
 당장은 연락처 페이지만 적용했으나 앞으로도 단계적으로 React-Query를 적용할 계획이고 Suspense, loading indicator, SkeletonUI는 잘못 사용할 경우 역효과를 불러올 수 있기 때문에 충분한 고민 후 적용할 것 같다. 이번 포스팅을 진행하며 그동안 웹 페이지를 이용하며 느낀 사용자 경험을 위한 부분들이 단순히 만든 것이 아닌 여러 분석을 통한 치밀한 설계였다는 것에 감탄했고 중요성을 다시금 깨닫는 좋은 계기가 되었다고 생각한다.
 
 <br/>
-
-
 
 <br/><br/><br/><br/>
 
