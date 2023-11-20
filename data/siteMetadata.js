@@ -6,7 +6,7 @@ const siteMetadata = {
   description: '최근 글',
   language: 'ko',
   theme: 'system', // system, dark or light
-  siteUrl: 'https://tailwind-nextjs-starter-blog.vercel.app',
+  siteUrl: 'https://mintmin-dev-world.vercel.app',
   siteRepo: 'https://github.com/timlrx/tailwind-nextjs-starter-blog',
   siteLogo: '/static/images/hamin.PNG',
   socialBanner: '/static/images/banner.jpeg',
