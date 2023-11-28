@@ -78,6 +78,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
       />
+      <meta name="google-site-verification" content="p8Py64RY_5tnNVrjLiGzdkZVoYju6Q6fpmeC0IRyeeI" />
       <link rel="alternate" type="application/rss+xml" href="/feed.xml" />
       <body className="text-black antialiased dark:bg-gray-800 dark:text-white bg-zinc-100 w-full mx-auto">
         <ScrollProgressBar />
