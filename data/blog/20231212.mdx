@@ -1,0 +1,268 @@
+---
+title: 'React - ErrorBoundary 적용기'
+date: '2023-12-12'
+tags: ['REACT', 'Library']
+draft: false
+summary: 'React Query와 react-error-boundary를 이용해 ErrorBoundary 구현하기'
+---
+
+최근에 책에서도 관련 내용을 읽기도 했고, 예전부터 ErrorBoundary를 공부해 보고 싶다는 생각을 해왔기 때문에 시간적 여유가 생겼을 때 곧바로 실행에 옮기게 되었다. 이미 많은 아티클이 존재했고 덕분에 적용하기까지 많은 시간이 걸리지는 않았다. 그동안 try-catch 외에는 별다른 에러 처리는 생각해 본 적도 없었고 에러가 발생하면 그냥 에러가 발생한다고 생각만 했던 것 같다. 에러가 없는 프로그램을 만든다는 것은 쉬운 일이 아니기에, 발생할 에러를 대비할 필요가 있다. ErrorBoundary를 사용해 보기 위해 찾아봤던 내용을 정리하고 적용 및 테스트하는 과정에서 고민하고 느겼던 부분을 정리하고자 한다.
+
+<br/>
+
+> ### 📌 준비물
+1. TanStack Query v5
+2. react-error-boundary
+3. 부모 자식 구조의 컴포넌트
+
+<br/>
+
+## 에러 경계(Error Boundaries)란 무엇일까?
+
+> UI의 일부분에 존재하는 자바스크립트 에러가 전체 애플리케이션을 중단시켜서는 안 됩니다. React 사용자들이 겪는 이 문제를 해결하기 위해 React 16에서는 에러 경계(“error boundary”)라는 새로운 개념이 도입되었습니다.
+
+- 하위 컴포넌트 트리의 어디에서든 자바스크립트 에러를 기록하며 깨진 컴포넌트 트리 대신 폴백 UI를 보여주는 React 컴포넌트이다.
+- 렌더링 도중 생명주기 메서드 및 그 아래에 있는 전체 트리에서 에러를 잡아낸다.
+
+### 보일러플레이트 코드
+
+```
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    // 다음 렌더링에서 폴백 UI가 보이도록 상태를 업데이트 합니다.
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    // 에러 리포팅 서비스에 에러를 기록할 수도 있습니다.
+    logErrorToMyService(error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      // 폴백 UI를 커스텀하여 렌더링할 수 있습니다.
+      return <h1>Something went wrong.</h1>;
+    }
+
+    return this.props.children;
+  }
+}
+```
+
+공식 문서에서 제공한 보일러플레이트 코드에는 클래스형 컴포넌트로 구현되어, 라이프 사이클을 더 세부적으로 관리할 수 있다고 한다. 따로 코드를 담은 컴포넌트를 만들어 사용할 수 있지만, react-error-boundary 라이브러리를 사용하면 간단하게 ErrorBoundary를 호출해서 사용할 수 있다.  
+
+```
+import { Component, ErrorInfo } from "react";
+import { ErrorBoundaryProps } from "./types.js";
+type ErrorBoundaryState = {
+    didCatch: boolean;
+    error: any;
+};
+export declare class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+    constructor(props: ErrorBoundaryProps);
+    static getDerivedStateFromError(error: Error): {
+        didCatch: boolean;
+        error: Error;
+    };
+    resetErrorBoundary(...args: any[]): void;
+    componentDidCatch(error: Error, info: ErrorInfo): void;
+    componentDidUpdate(prevProps: ErrorBoundaryProps, prevState: ErrorBoundaryState): void;
+    render(): 
+      import("react").FunctionComponentElement<import("react")
+      .ProviderProps<import("./ErrorBoundaryContext.js")
+      .ErrorBoundaryContextType | null>>;
+}
+export {};
+
+```
+
+ErrorBoundary 라이브러리 파일을 살펴보면, 공식 문서에서 제공하는 코드에서 확인할 수 있는 getDerivedStateFromError, componentDidCatch 등의 메서드를 확인할 수 있다. 
+
+
+<br/>
+
+## 직접 적용해 보기
+
+### 부모 컴포넌트
+
+```
+const 부모 컴포넌트 = () => {
+  return (
+    <QueryErrorResetBoundary>
+      {({ reset }) => (
+        <ErrorBoundary
+          onReset={reset}
+          FallbackComponent={ErrorFallback}
+        >
+          <자식 컴포넌트 />
+        </ErrorBoundary>
+      )}
+    </QueryErrorResetBoundary>
+  );
+};
+
+export default ProductPage;
+```
+
+부모 컴포넌트를 우선 살펴보면, Suspense 때와는 다르게 두 겹의 구조로 형성되어 있다. ErrorBoundary 처리가 필요한 자식 컴포넌트를 자체를 props로 넘겨 children으로 사용한다.
+
+<br/>
+
+#### QueryErrorResetBoundary
+
+- [공식 문서](https://tanstack.com/query/v5/docs/react/reference/QueryErrorResetBoundary)에 따르면,
+
+> 쿼리에서 suspense 또는 throwOnError를 사용할 때 오류가 발생한 후 다시 렌더링 할 때 다시 시도하고 싶다는 것을 쿼리에 알리는 방법이 필요합니다. 구성 요소를 사용하면 QueryErrorResetBoundary 구성 요소 경계 내의 모든 쿼리 오류를 재설정할 수 있습니다.
+
+**오류가 발생한 후 다시 렌더링**이 필요한 경우를 생각해 보자, 포켓몬 도감을 만들기 위해 API 요청했을 때 실수로 URL을 잘못 설정했다면, 오류가 발생할 것이다. (따로 오류 처리를 하지 않았다고 가정)
+
+![](https://velog.velcdn.com/images/mintmin0320/post/08cf594b-ccfe-40e8-acfd-d6e5c1529a9f/image.png)
+
+개발 환경에서는 위 사진처럼 발생한 오류를 처리하지 않을 경우 애플리케이션이 종료되는 크래시(crash) 현상이 발생한다. (프로덕션 환경에서는 흰색 화면만 계속 노출된 거나 아무 변화가 없다.) 사용자는 흰색 화면을 계속해서 보게 되고, 당황한 마음에 페이지를 새로고침 하거나, 웹 사이트를 떠나게 될 것이다. 따라서, 오류를 처리하고 화면에 "오류가 발생했습니다! 다시 시도해 주세요." 같은 메시지와 다시 시도 등의 버튼을 제공하는 UI를 제공한다면, 그나마 사용자들의 입장에서도 어느 정도 상황을 인지하고 다음 행동을 취할 수 있을 것이다.
+
+<br/>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/432c41f5-1093-479c-84d2-f1d3f73d6bd2/image.png) 
+( 이번 테스트를 위해 오류가 발생했을 때 표시될 UI ) 
+
+<br/>
+
+다시 본론으로 돌아와서,
+- QueryErrorResetBoundary 컴포넌트는 내부적으로 콜백 함수를 반환하며, reset 인자를
+ErrorBoundary의 onReset 속성에 부여하면 FallbackComponent에서 렌더링 될 컴포넌트에서 사용할 수 있게 된다.
+
+- 가장 근접한 QueryErrorResetBoundary 컴포넌트 하위의 모든 오류 처리를 위임받고, 쿼리 오류를 재설정한다. (정의된 바운더리가 없다면 전역으로 재설정)
+
+```
+<QueryErrorResetBoundary>
+  {({ reset }) => (    // ⭐️ 이 부분
+    <ErrorBoundary
+      onReset={reset}  // ⭐️ 이 부분
+      FallbackComponent={ErrorFallback}
+    >
+     <자식 컴포넌트 />
+   </ErrorBoundary>
+  )}
+</QueryErrorResetBoundary>
+```
+
+<br/>
+
+#### FallbackComponent
+- 에러가 발생했을 때 렌더링 될 컴포넌트를 배치할 수 있다.
+- 💡 단, ErrorFallback을 태그 형식인 ```<ErrorFallback>```가 아닌 ErrorFallback로 컴포넌트 명칭만 표기해야 한다.
+
+<br/>
+
+#### ErrorFallback
+- error, resetErrorBoundary라는 두 개의 프로퍼티를 받는다. 각각 에러 객체와 에러 처리를 재시도할 때 사용할 수 있는 함수
+
+```
+const ErrorFallback = ({ error, resetErrorBoundary }) => {
+  return (
+    <div >
+      <p> 에러: {error.message} </p>
+      <button onClick={() => resetErrorBoundary()}> 다시 시도 </button>
+    </div>
+  );
+};
+
+export default ErrorFallback;
+```
+
+- onClick 이벤트로 등록된 다시 시작 버튼을 클릭하면, resetErrorBoundary 함수가 실행되고 자식 컴포넌트에서 에러가 발생했던 요청을 재시도 하게 된다.
+
+<br/>
+
+### 자식 컴포넌트
+
+```
+const ChildComponent = () => {
+
+  const fetchPokemon = async () => {
+    const { data } = await client.get(
+      'https://pokeapi.co/api/v2/pokemon/ditto'
+    );
+
+    console.log(data)
+
+    return data;
+  };
+
+  const { data } = useQuery(
+    {
+      queryKey: ['pokemon'],
+      queryFn: fetchPokemon,
+      throwOnError: true
+    }
+  );
+
+  return (
+    <div>
+      {data?.name}
+    </div>
+  );
+};
+
+export default ChildComponent;
+```
+
+- React-Query와 함께 사용하기 위해 기존에는 useErrorBoundary 옵션을 true로 설정해 사용했으나, v5 버전에서는 throwOnError 옵션으로 명칭이 변경되었다.
+- Suspense와 함께 사용해야 할 경우에는 useQuery가 아닌 이번에 추가된 useSuspenseQuery를 사용할 수 있다. 단, useSuspenseQuery를 사용할 경우 throwOnError, suspense 옵션 사용이 불가능하다.
+
+<br/>
+
+## 테스트 결과
+
+![](https://velog.velcdn.com/images/mintmin0320/post/d2249db6-c13a-4d57-8a91-864078e5bfb9/image.gif)
+
+- 테스트를 위해 다시 시작 버튼 클릭 시 랜덤으로 URL을 설정해 요청을 보내고, 정확한 URL로 요청을 보냈을 경우 "ditto" 메시지를 출력 된다.
+
+- 프로덕션 환경에서 진행
+
+### 📌 유의사항
+
+![](https://velog.velcdn.com/images/mintmin0320/post/59691d6e-2e1a-4fb0-bc35-d7e36d18148b/image.gif)
+
+- 개발 환경에서 테스트 할 경우 애플리케이션이 crash되며 종료된다.
+
+<br/> 
+
+> 🤷‍♂️ 개발 환경에서는 왜 crash 상태가 다르게 발생할까?
+
+![](https://velog.velcdn.com/images/mintmin0320/post/08cf594b-ccfe-40e8-acfd-d6e5c1529a9f/image.png)
+
+테스트를 위해 여러 시도를 거치던 중, 계속 검은 화면에 붉은 글씨로 에러가 표시되는 crash 화면으로 인해 많은 시간을 소모하게 되었다. 곧바로 에러가 발생했을 때 fallback 될 컴포넌트가 아닌 crash 화면이 발생하고 창을 닫았을 때야 확인할 수 있었기 때문에 코드를 잘못 작성한 줄 알고 있었다.. 😭 
+
+#### GPT에게 문의한 결과
+- 개발 환경에서는 개발자가 오류를 놓치지 않고 즉시 해결해야 하기 때문에 오류를 더 명확하게 표시한다.
+- 프로덕션 환경에서는 사용자 경험을 최우선으로 고려하기 때문에 오류 처리 메커니즘이 오류 발생 시에 사용자에게 깔끔한 피드백을 제공하도록 구성되어 있다. (오류를 "잠재우는" 방식으로 처리)
+
+이외에도 핫 리로딩, 엄격 모드 등을 설명해 주고 있다. 알고 보니 개발 환경에서 오류 발생 시 더 명확하게 표시해 개발자에게 도움을 주는 고마운 역할을 하고 있었다.
+
+<br/>
+
+## 마치며
+react-error-boundary와 React Query에서 제공하는 기능들을 통해 기존 ErrorBoundary에서 처리하기 번거로웠던 비동기적 코드를 간단하게 처리할 수 있었다. 예전 Suspense를 사용했을 때 ErrorBoundary를 다뤄보고 싶다는 생각은 했지만 중간에 crash로 인해 예상보다 많은 시간을 소모하게 됐다. 단순히 공부만 하는 것이 아닌, 직접 적용해 보고 정리하는 과정에서 더 많은 도움이 되었다고 생각한다. 앞으로 API가 만들어진다면, 즉시 프로젝트에 적용해 볼 계획이다.
+
+TanStack Query 기존 v4 버전에서 v5로 업그레이드 후에 본격적으로는 처음 사용해 보게 되었는데, 전보다 많은 것들이 바뀐 것 같다. 이 과정에서 많은 사람들이 강조하는 공식 문서의 중요성을 다시금 깨달았다. 이번에 특히 공식 문서를 많이 참고하며 정리했던 것 같다. 앞으로도 오늘의 기억을 잃지 말고 적재적소에 잘 사용할 수 있었으면 좋겠다! 🚀
+
+
+<br/><br/><br/>
+
+## Reference
+
+[ErrorBoundary 가 포착할 수 없는 에러와 그 이론적 원리 분석](https://happysisyphe.tistory.com/66?category=539404)
+
+[TanStack Query v5 공식 문서](https://tanstack.com/query/v5/docs/react/reference/QueryErrorResetBoundary)
+
+[실습을 위한 API - 포켓몬 API](https://pokeapi.co/)
+
+[React error handling with react-error-boundary](https://blog.saeloun.com/2023/07/06/react-error-boundaries/)
+
+[에러 경계(Error Boundaries) - 공식 문서](https://ko.legacy.reactjs.org/docs/error-boundaries.html)
