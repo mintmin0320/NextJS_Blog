@@ -1,18 +1,54 @@
 ---
 title: 'React 에러 핸들링 - ErrorBoundary 적용기'
 date: '2023-12-12'
-tags: ['REACT', 'Library']
+tags: ['REACT']
 draft: false
 summary: 'React Query와 react-error-boundary를 이용해 ErrorBoundary 구현하기'
 ---
 
-최근에 책에서도 관련 내용을 읽기도 했고, 예전부터 ErrorBoundary를 공부해 보고 싶다는 생각을 해왔기 때문에 시간적 여유가 생겼을 때 곧바로 실행에 옮기게 되었다. 이미 많은 아티클이 존재했고 덕분에 적용하기까지 많은 시간이 걸리지는 않았다. 그동안 try-catch 외에는 별다른 에러 처리는 생각해 본 적도 없었고 에러가 발생하면 그냥 에러가 발생한다고 생각만 했던 것 같다. 에러가 없는 프로그램을 만든다는 것은 쉬운 일이 아니기에, 발생할 에러를 대비할 필요가 있다. ErrorBoundary를 사용해 보기 위해 찾아봤던 내용을 정리하고 적용 및 테스트하는 과정에서 고민하고 느겼던 부분을 정리하고자 한다.
+![](https://velog.velcdn.com/images/mintmin0320/post/08cf594b-ccfe-40e8-acfd-d6e5c1529a9f/image.png)
+
+로컬(개발 환경)에서 프로젝트 진행하며 에러가 발생했을 때, 위 사진과 같이 화면이 깜깜해지며 에러 메시지를 출력하고 웹사이트가 중단되는 현상을 자주 겪었다. 주로 잘못된 코드를 입력하거나 네트워크 에러 등 다양한 상황에서 마주하게 됐었는데, 이상함을 느끼지 못했다. 그냥 에러가 발생한 줄 알았다. 
+
+<br/>
+
+##  프로젝트가 배포된 경우(프로덕션 환경)에는 로컬과 다른 현상이 발생한다.
+### 1. 갑자기 화면이 새하얀 눈이 온 것처럼 흰색 화면이 되어버린다. <br/>
+
+과거에 첫 프로젝트 데모를 진행하던 중 대여 버튼을 클릭했을 때 네트워크 문제로 인해 이 흰색 배경을 마주친 경험이 있다. 이때도 식은땀을 흘렸지만, 그냥 에러가 발생했다고 생각만 하고 넘어갔다.
+
+![](https://velog.velcdn.com/images/mintmin0320/post/e86f9bef-4a2d-4d3f-bfe0-2453860096d0/image.jpg)
+
+> 아.. 뭐야 왜이래?
+
+<br/>
+
+### 2. 아무 변화가 없다. <br/>
+로그인 버튼을 클릭했는데, 아무 변화가 없다. 개발자 도구로 확인해 본 결과 요청은 정상적으로 보내고 있었다. 알고 보니 백엔드 서버가 실행되어 있지 않았다.
+
+<br/>
+
+## 생각해 보니 이상하다?
+
+이 과정을 겪으면서도 이상함을 느끼지 못했다. 그런데 이번에 Suspense를 공부하며 ErrorBoundary 관련 내용을 알게 되었고 처음으로 이 부분에 대해 생각하게 되었다. 
+- 개발 환경에서와 프로덕션 환경에서 왜 에러 발생 상황이 다를까?
+- 에러 발생 시 UI 표시와 새로 고침, 재요청 등은 어떻게 하는 거지?
+
+<br/>
+
+우선 우리가 흔히 사용하는 인스타에서 에러가 발생했을 때(네트워크, 서버 등등)의 모습을 살펴보았다.
+
+![](https://velog.velcdn.com/images/mintmin0320/post/e86bb124-f2c8-433a-8527-063cb694daa1/image.png)
+
+인스타 피드에서 네트워크 연결을 끊고 이전 게시물 보기 버튼을 클릭한 결과 위 사진처럼 되었다. 네트워크를 다시 연결하고 페이지 새로 고침 버튼을 클릭하면 정상적으로 피드를 확인할 수 있게 된다. 그동안 이러한 UI를 본 경험이 많았지만, 단순하게 새로 고침 버튼을 눌렀다. 이것이 당연한 줄 알고 있었던 것이다. 내 프로젝트는 에러가 발생했을 때 개발자인 나도 모르는 상태가 되었다. 만든 나도 모르는데, 하물며 사용자들은 당혹스럽고 더 당황스러웠을 것이다.
+
+### 따라서 이번 포스팅에서는 ErrorBoundary를 이용해 에러가 발생했을 때 UI로 대체하는 방법을 공부하고 프로젝트에 적용해 볼 계획이다.
 
 <br/>
 
 > ### 📌 준비물
 1. TanStack Query v5
-2. react-error-boundary
+2. react-error-boundary 라이브러리
 3. 부모 자식 구조의 컴포넌트
 
 <br/>
@@ -57,6 +93,8 @@ class ErrorBoundary extends React.Component {
 공식 문서에서 제공한 보일러플레이트 코드에는 클래스형 컴포넌트로 구현되어, 라이프 사이클을 더 세부적으로 관리할 수 있다고 한다. 따로 코드를 담은 컴포넌트를 만들어 사용할 수 있지만, react-error-boundary 라이브러리를 사용하면 간단하게 ErrorBoundary를 호출해서 사용할 수 있다.  
 
 ```
+/* node_modules > ErrorBoundary 라이브러리 */
+
 import { Component, ErrorInfo } from "react";
 import { ErrorBoundaryProps } from "./types.js";
 type ErrorBoundaryState = {
@@ -86,7 +124,10 @@ export {};
 
 ```
 
-ErrorBoundary 라이브러리 파일을 살펴보면, 공식 문서에서 제공하는 코드에서 확인할 수 있는 getDerivedStateFromError, componentDidCatch 등의 메서드를 확인할 수 있다. 
+### 📌 ErrorBoundary 라이브러리 파일
+node_modules에서 ErrorBoundary 파일을 살펴보면, 
+- 보일러플레이트 코드와 동일하게 getDerivedStateFromError 생명 주기 메서드를 사용해 에러가 발생한 컴포넌트 상태를 업데이트 하고 있다. (폴백 UI가 보이도록 상태를 업데이트)
+- componentDidCatch 메서드의 모습도 보인다.
 
 
 <br/>
@@ -124,21 +165,9 @@ export default ProductPage;
 
 > 쿼리에서 suspense 또는 throwOnError를 사용할 때 오류가 발생한 후 다시 렌더링 할 때 다시 시도하고 싶다는 것을 쿼리에 알리는 방법이 필요합니다. 구성 요소를 사용하면 QueryErrorResetBoundary 구성 요소 경계 내의 모든 쿼리 오류를 재설정할 수 있습니다.
 
-**오류가 발생한 후 다시 렌더링**이 필요한 경우를 생각해 보자, 포켓몬 도감을 만들기 위해 API 요청했을 때 실수로 URL을 잘못 설정했다면, 오류가 발생할 것이다. (따로 오류 처리를 하지 않았다고 가정)
-
-![](https://velog.velcdn.com/images/mintmin0320/post/08cf594b-ccfe-40e8-acfd-d6e5c1529a9f/image.png)
-
-개발 환경에서는 위 사진처럼 발생한 오류를 처리하지 않을 경우 애플리케이션이 종료되는 크래시(crash) 현상이 발생한다. (프로덕션 환경에서는 흰색 화면만 계속 노출된 거나 아무 변화가 없다.) 사용자는 흰색 화면을 계속해서 보게 되고, 당황한 마음에 페이지를 새로고침 하거나, 웹 사이트를 떠나게 될 것이다. 따라서, 오류를 처리하고 화면에 "오류가 발생했습니다! 다시 시도해 주세요." 같은 메시지와 다시 시도 등의 버튼을 제공하는 UI를 제공한다면, 그나마 사용자들의 입장에서도 어느 정도 상황을 인지하고 다음 행동을 취할 수 있을 것이다.
-
 <br/>
 
-![](https://velog.velcdn.com/images/mintmin0320/post/432c41f5-1093-479c-84d2-f1d3f73d6bd2/image.png) 
-( 이번 테스트를 위해 오류가 발생했을 때 표시될 UI ) 
-
-<br/>
-
-다시 본론으로 돌아와서,
-- QueryErrorResetBoundary 컴포넌트는 내부적으로 콜백 함수를 반환하며, reset 인자를
+- 내부적으로 콜백 함수를 반환하며, reset 인자를
 ErrorBoundary의 onReset 속성에 부여하면 FallbackComponent에서 렌더링 될 컴포넌트에서 사용할 수 있게 된다.
 
 - 가장 근접한 QueryErrorResetBoundary 컴포넌트 하위의 모든 오류 처리를 위임받고, 쿼리 오류를 재설정한다. (정의된 바운더리가 없다면 전역으로 재설정)
@@ -187,6 +216,8 @@ export default ErrorFallback;
 ### 자식 컴포넌트
 
 ```
+import { useQuery } from '@tanstack/react-query';
+
 const ChildComponent = () => {
 
   const fetchPokemon = async () => {
@@ -217,12 +248,20 @@ const ChildComponent = () => {
 export default ChildComponent;
 ```
 
+## 📌 React Query 관련 주의 사항
+
 - React-Query와 함께 사용하기 위해 기존에는 useErrorBoundary 옵션을 true로 설정해 사용했으나, v5 버전에서는 throwOnError 옵션으로 명칭이 변경되었다.
+
+<br/>
+
 - Suspense와 함께 사용해야 할 경우에는 useQuery가 아닌 이번에 추가된 useSuspenseQuery를 사용할 수 있다. 단, useSuspenseQuery를 사용할 경우 throwOnError, suspense 옵션 사용이 불가능하다.
 
 <br/>
 
-## 테스트 결과
+## 테스트
+
+![](https://velog.velcdn.com/images/mintmin0320/post/432c41f5-1093-479c-84d2-f1d3f73d6bd2/image.png) 
+( 이번 테스트를 위해 오류가 발생했을 때 표시될 UI, 에러 메시지와 쿼리 재설정을 위한 버튼 제공 ) 
 
 ![](https://velog.velcdn.com/images/mintmin0320/post/d2249db6-c13a-4d57-8a91-864078e5bfb9/image.gif)
 
@@ -253,9 +292,10 @@ export default ChildComponent;
 <br/>
 
 ## 마치며
-react-error-boundary와 React Query에서 제공하는 기능들을 통해 기존 ErrorBoundary에서 처리하기 번거로웠던 비동기적 코드를 간단하게 처리할 수 있었다. 예전 Suspense를 사용했을 때 ErrorBoundary를 다뤄보고 싶다는 생각은 했지만 중간에 crash로 인해 예상보다 많은 시간을 소모하게 됐다. 단순히 공부만 하는 것이 아닌, 직접 적용해 보고 정리하는 과정에서 더 많은 도움이 되었다고 생각한다. 앞으로 API가 만들어진다면, 즉시 프로젝트에 적용해 볼 계획이다.
+react-error-boundary와 React Query에서 제공하는 기능들을 통해 기존 ErrorBoundary에 비해서 더욱 간단하게 구현이 가능해진 것 같다. Suspense를 사용했을 때 ErrorBoundary를 다뤄보고 싶다는 생각은 했지만 개발 환경에서 발생하는 crash를 보고 잘못 구현한 줄 알고 예상보다 많은 시간을 소모하게 됐다. 또한 평소에 가볍게 사용했던 기능들에 대해서 다시 생각해 보고 찾아보는 좋은 계기가 되었다. 단순히 공부만 하는 것이 아닌, 직접 프로젝트에 적용하는 과정에서 생각보다 신기하고 재미있었다.
 
-TanStack Query 기존 v4 버전에서 v5로 업그레이드 후에 본격적으로는 처음 사용해 보게 되었는데, 전보다 많은 것들이 바뀐 것 같다. 이 과정에서 많은 사람들이 강조하는 공식 문서의 중요성을 다시금 깨달았다. 이번에 특히 공식 문서를 많이 참고하며 정리했던 것 같다. 앞으로도 오늘의 기억을 잃지 말고 적재적소에 잘 사용할 수 있었으면 좋겠다! 🚀
+TanStack Query 기존 v4 버전에서 v5로 업그레이드에서 생각보다 많은 것들이 바뀐 것 같다. 이 과정에서 많은 사람들이 강조하는 공식 문서의 중요성을 다시금 깨달았다.. 당장 useSuspenseQuery 옵션을 적용하려고 계속 시도했지만 결국 실패하며 스트레스를 많이 받았었는데 알고 보니 throwOnError로 명칭이 바뀌었다는 사실을 뒤늦게 알게 되었다. <br/> 정말 많이 허탈했다.🤦‍♂️ 
+앞으로는 같은 실수를 반복하지 말고 공식 문서를 더 확인하도록 하자! 🚀
 
 
 <br/><br/><br/>
