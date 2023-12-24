@@ -1,5 +1,5 @@
 ---
-title: 'React 에러 핸들링 - ErrorBoundary 적용기'
+title: 'React 에러 핸들링을 해보자 - ErrorBoundary'
 date: '2023-12-12'
 tags: ['REACT']
 draft: false
@@ -137,11 +137,15 @@ class ErrorBoundary extends react.Component {
     } = this.state;
     if (error !== null) {
       var _this$props$onReset, _this$props;
-      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+      for (
+        var _len = arguments.length
+        var args = new Array(_len), _key = 0; _key < _len; _key++
+        ) {
         args[_key] = arguments[_key];
       }
       (_this$props$onReset =
-       (_this$props = this.props).onReset) === null || _this$props$onReset === void 0 
+       (_this$props = this.props).onReset) === null 
+       || _this$props$onReset === void 0 
        ? void 0 
        : _this$props$onReset.call(_this$props, {
         args,
@@ -159,10 +163,15 @@ class ErrorBoundary extends react.Component {
       resetKeys
     } = this.props;
 
-    if (didCatch && prevState.error !== null && hasArrayChanged(prevProps.resetKeys, resetKeys)) {
+    if (
+      didCatch
+      && prevState.error !== null 
+      && hasArrayChanged(prevProps.resetKeys, resetKeys)
+      ) {
       var _this$props$onReset2, _this$props3;
       (_this$props$onReset2 =
-       (_this$props3 = this.props).onReset) === null || _this$props$onReset2 === void 0 
+       (_this$props3 = this.props).onReset) === null
+        || _this$props$onReset2 === void 0 
        ? void 0 
        : _this$props$onReset2.call(_this$props3, {
         next: resetKeys,
