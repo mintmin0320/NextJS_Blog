@@ -60,6 +60,8 @@ summary: 'React Query와 react-error-boundary를 이용해 ErrorBoundary 구현�
 - 하위 컴포넌트 트리의 어디에서든 자바스크립트 에러를 기록하며 깨진 컴포넌트 트리 대신 폴백 UI를 보여주는 React 컴포넌트이다.
 - 렌더링 도중 생명주기 메서드 및 그 아래에 있는 전체 트리에서 에러를 잡아낸다.
 
+<br/>
+
 ### 보일러플레이트 코드
 
 ```
@@ -90,45 +92,142 @@ class ErrorBoundary extends React.Component {
 }
 ```
 
-공식 문서에서 제공한 보일러플레이트 코드에는 클래스형 컴포넌트로 구현되어, 라이프 사이클을 더 세부적으로 관리할 수 있다고 한다. 따로 코드를 담은 컴포넌트를 만들어 사용할 수 있지만, react-error-boundary 라이브러리를 사용하면 간단하게 ErrorBoundary를 호출해서 사용할 수 있다.  
+- 자식(하위) 컴포넌트에서 에러가 발생하면, getDerivedStateFromError가 실행되고 hasError 가 true 상태로 변경한다.
+- render 메서드에서 hasError를 이용한 조건 분기를 이용해 fallback UI 렌더링이 가능하다.
 
-```
-/* node_modules > ErrorBoundary 라이브러리 */
+<br/>
 
-import { Component, ErrorInfo } from "react";
-import { ErrorBoundaryProps } from "./types.js";
-type ErrorBoundaryState = {
-    didCatch: boolean;
-    error: any;
-};
-export declare class ErrorBoundary extends Component<
-ErrorBoundaryProps, ErrorBoundaryState
-> {
-    constructor(props: ErrorBoundaryProps);
-    static getDerivedStateFromError(error: Error): {
-        didCatch: boolean;
-        error: Error;
-    };
-    resetErrorBoundary(...args: any[]): void;
-    componentDidCatch(error: Error, info: ErrorInfo): void;
-    componentDidUpdate(
-      prevProps: ErrorBoundaryProps,
-      prevState: ErrorBoundaryState
-    ): void;
-    render(): 
-      import("react").FunctionComponentElement<import("react")
-      .ProviderProps<import("./ErrorBoundaryContext.js")
-      .ErrorBoundaryContextType | null>>;
-}
-export {};
+공식 문서에서 제공한 보일러플레이트 코드에는 클래스형 컴포넌트로 구현되어있으며, 라이프 사이클을 더 세부적으로 관리할 수 있다는 장점이 있다. 하지만, 함수형 컴포넌트에서는 아직 error-boundary를 지원하지 않기 때문에 react-error-boundary 라이브러리를 사용하면 간단하게 ErrorBoundary를 호출해서 사용할 수 있다.
 
-```
+<br/>
 
 ### 📌 ErrorBoundary 라이브러리 파일
-node_modules에서 ErrorBoundary 파일을 살펴보면, 
-- 보일러플레이트 코드와 동일하게 getDerivedStateFromError 생명 주기 메서드를 사용해 에러가 발생한 컴포넌트 상태를 업데이트 하고 있다. (폴백 UI가 보이도록 상태를 업데이트)
-- componentDidCatch 메서드의 모습도 보인다.
+라이브러리를 사용하며, 기존 error-boundary와 차이점이 있는지 궁금증이 생겼다. node_modules에서 파일을 살펴보니, 생소한 내용이 많았지만 그중에서 몇몇 개의 낯익은 메서드를 확인할 수 있었다.
 
+```
+node_modules > react-error-boundary > react-error-boundary.cjs.js
+
+const ErrorBoundaryContext = react.createContext(null);
+
+const initialState = {
+  didCatch: false,
+  error: null
+};
+class ErrorBoundary extends react.Component {
+  constructor(props) {
+    super(props);
+    this.resetErrorBoundary = this.resetErrorBoundary.bind(this);
+    this.state = initialState;
+  }
+  static getDerivedStateFromError(error) {
+    return {
+      didCatch: true,
+      error
+    };
+  }
+
+```
+
+- didCatch가 기존 hasError와 비슷한 역할을 수행하고 있다.
+
+```
+  resetErrorBoundary() {
+    const {
+      error
+    } = this.state;
+    if (error !== null) {
+      var _this$props$onReset, _this$props;
+      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
+      }
+      (_this$props$onReset =
+       (_this$props = this.props).onReset) === null || _this$props$onReset === void 0 
+       ? void 0 
+       : _this$props$onReset.call(_this$props, {
+        args,
+        reason: "imperative-api"
+      });
+      this.setState(initialState);
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    const {
+      didCatch
+    } = this.state;
+    const {
+      resetKeys
+    } = this.props;
+
+    if (didCatch && prevState.error !== null && hasArrayChanged(prevProps.resetKeys, resetKeys)) {
+      var _this$props$onReset2, _this$props3;
+      (_this$props$onReset2 =
+       (_this$props3 = this.props).onReset) === null || _this$props$onReset2 === void 0 
+       ? void 0 
+       : _this$props$onReset2.call(_this$props3, {
+        next: resetKeys,
+        prev: prevProps.resetKeys,
+        reason: "keys"
+      });
+      this.setState(initialState);
+    }
+  }
+
+  render() {
+    const {
+      children,
+      fallbackRender,
+      FallbackComponent,
+      fallback
+    } = this.props;
+    const {
+      didCatch,
+      error
+    } = this.state;
+    let childToRender = children;
+    if (didCatch) {
+      const props = {
+        error,
+        resetErrorBoundary: this.resetErrorBoundary
+      };
+      if (react.isValidElement(fallback)) {
+        childToRender = fallback;
+      } else if (typeof fallbackRender === "function") {
+        childToRender = fallbackRender(props);
+      } else if (FallbackComponent) {
+        childToRender = react.createElement(FallbackComponent, props);
+      } else {
+        throw error;
+      }
+    }
+    return react.createElement(ErrorBoundaryContext.Provider, {
+      value: {
+        didCatch,
+        error,
+        resetErrorBoundary: this.resetErrorBoundary
+      }
+    }, childToRender);
+  }
+```
+
+### resetErrorBoundary
+### componentDidUpdate
+
+### render
+
+- 에러가 포착된 경우 (didCatch가 true로 변경되면), 3개의 폴백 메커니즘 중 하나로 렌더링하는 역할을 담당한다.
+
+  - fallback
+  - fallbackRender
+  - FallbackComponent
+
+<br/>
+
+- ErrorBoundaryContext.Provider를 사용하여 에러 관련 상태를 컨텍스트로 제공하고, 선택된 자식 요소를 렌더링한다.
+
+<br/>
+
+라이브러리 코드를 살펴본 뒤에 전체적인 코드를 이해하기에는 어려움이 있었지만, onReset, FallbackComponent 속성의 동작원리를 이해하는데 많은 도움이 되었다. 직접 클래스형 컴포넌트로 구현할 경우 내가 원하는 데로 더 작성할 수 있다는 생각이 들었지만, 현재로서는 라이브러리를 사용해도 충분하다는 생각이 들기 때문에 이번 프로젝트에는 라이브러리로 적용할 계획이다.
 
 <br/>
 
@@ -311,3 +410,5 @@ TanStack Query 기존 v4 버전에서 v5로 업그레이드에서 생각보다 �
 [React error handling with react-error-boundary](https://blog.saeloun.com/2023/07/06/react-error-boundaries/)
 
 [에러 경계(Error Boundaries) - 공식 문서](https://ko.legacy.reactjs.org/docs/error-boundaries.html)
+
+[npm react-error-boundary](https://www.npmjs.com/package/react-error-boundary)
