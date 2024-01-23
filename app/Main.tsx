@@ -28,10 +28,10 @@ export default function Home({ posts }) {
             <div className="flex justify-center text-base font-medium leading-6">
               <Link
                 href="/blog"
-                className="text-primary-500 hover:text-black dark:hover:text-white"
+                className="text-primary-500 hover:text-black dark:hover:text-white pr-3"
                 aria-label="All posts"
               >
-                전체보기
+                전체 보기
               </Link>
             </div>
           )}
