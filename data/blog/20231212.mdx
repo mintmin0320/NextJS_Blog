@@ -4,39 +4,43 @@ date: '2023-12-12'
 tags: ['REACT']
 draft: false
 summary: 'React Query와 react-error-boundary를 이용해 ErrorBoundary 구현하기'
+images: ['/static/images/thumbnail/errorboundary.jpeg']
 ---
 
 ![](https://velog.velcdn.com/images/mintmin0320/post/08cf594b-ccfe-40e8-acfd-d6e5c1529a9f/image.png)
 
-로컬(개발 환경)에서 프로젝트 진행하며 에러가 발생했을 때, 위 사진과 같이 화면이 깜깜해지며 에러 메시지를 출력하고 웹사이트가 중단되는 현상을 자주 겪었다. 주로 잘못된 코드를 입력하거나 네트워크 에러 등 다양한 상황에서 마주하게 됐었는데, 이상함을 느끼지 못했다. 그냥 에러가 발생한 줄 알았다. 
+로컬(개발 환경)에서 프로젝트 진행하며 에러가 발생했을 때, 위 사진과 같이 화면이 깜깜해지며 에러 메시지를 출력하고 웹사이트가 중단되는 현상을 자주 겪었다. 주로 잘못된 코드를 입력하거나 네트워크 에러 등 다양한 상황에서 마주하게 됐었는데, 이상함을 느끼지 못했다. 그냥 에러가 발생한 줄 알았다.
 
-<br/>
+<br />
 
 ![](https://velog.velcdn.com/images/mintmin0320/post/e86f9bef-4a2d-4d3f-bfe0-2453860096d0/image.jpg)
 
 > 아.. 뭐야 왜이래?
 
-<br/>
+<br />
 
-##  프로젝트가 배포된 경우(프로덕션 환경)에는 로컬과 다른 현상이 발생한다.
+## 프로젝트가 배포된 경우(프로덕션 환경)에는 로컬과 다른 현상이 발생한다.
+
 ### 1. 갑자기 화면이 새하얀 눈이 온 것처럼 흰색 화면이 되어버린다. <br/>
 
 과거에 첫 프로젝트 데모를 진행하던 중 대여 버튼을 클릭했을 때 네트워크 문제로 인해 이 흰색 배경을 마주친 경험이 있다. 이때도 식은땀을 흘렸지만, 그냥 에러가 발생했다고 생각만 하고 넘어갔다.
 
-<br/>
+<br />
 
 ### 2. 아무 변화가 없다. <br/>
+
 로그인 버튼을 클릭했는데, 아무 변화가 없다. 개발자 도구로 확인해 본 결과 요청은 정상적으로 보내고 있었다. 알고 보니 백엔드 서버가 실행되어 있지 않았다.
 
-<br/>
+<br />
 
 ## 생각해 보니 이상하다?
 
-이 과정을 겪으면서도 이상함을 느끼지 못했다. 그런데 이번에 Suspense를 공부하며 ErrorBoundary 관련 내용을 알게 되었고 처음으로 이 부분에 대해 생각하게 되었다. 
+이 과정을 겪으면서도 이상함을 느끼지 못했다. 그런데 이번에 Suspense를 공부하며 ErrorBoundary 관련 내용을 알게 되었고 처음으로 이 부분에 대해 생각하게 되었다.
+
 - 개발 환경에서와 프로덕션 환경에서 왜 에러 발생 상황이 다를까?
 - 에러 발생 시 UI 표시와 새로 고침, 재요청 등은 어떻게 하는 거지?
 
-<br/>
+<br />
 
 확인을 위해 자주 사용하는 인스타에서 에러가 발생했을 때(네트워크, 서버 등등)의 상황을 살펴보았다.
 
@@ -46,14 +50,15 @@ summary: 'React Query와 react-error-boundary를 이용해 ErrorBoundary 구현�
 
 ### 따라서 이번 포스팅에서는 ErrorBoundary를 이용해 에러가 발생했을 때 UI로 대체하는 방법을 공부하고 프로젝트에 적용해 볼 계획이다.
 
-<br/>
+<br />
 
 > ### 📌 준비물
+
 1. TanStack Query v5
 2. react-error-boundary 라이브러리
 3. 부모 자식 구조의 컴포넌트
 
-<br/>
+<br />
 
 ## 에러 경계(Error Boundaries)란 무엇일까?
 
@@ -62,7 +67,7 @@ summary: 'React Query와 react-error-boundary를 이용해 ErrorBoundary 구현�
 - 하위 컴포넌트 트리의 어디에서든 자바스크립트 에러를 기록하며 깨진 컴포넌트 트리 대신 폴백 UI를 보여주는 React 컴포넌트이다.
 - 렌더링 도중 생명주기 메서드 및 그 아래에 있는 전체 트리에서 에러를 잡아낸다.
 
-<br/>
+<br />
 
 ### 보일러플레이트 코드
 
@@ -97,13 +102,14 @@ class ErrorBoundary extends React.Component {
 - 자식(하위) 컴포넌트에서 에러가 발생하면, getDerivedStateFromError가 실행되고 hasError 가 true 상태로 변경한다.
 - render 메서드에서 hasError를 이용한 조건 분기를 이용해 fallback UI 렌더링이 가능하다.
 
-<br/>
+<br />
 
 공식 문서에서 제공한 보일러플레이트 코드에는 클래스형 컴포넌트로 구현되어있으며, 라이프 사이클을 더 세부적으로 관리할 수 있다는 장점이 있다. 하지만, 함수형 컴포넌트에서는 아직 error-boundary를 지원하지 않기 때문에 react-error-boundary 라이브러리를 사용하면 간단하게 ErrorBoundary를 호출해서 사용할 수 있다.
 
-<br/>
+<br />
 
 ### 📌 ErrorBoundary 라이브러리 파일
+
 라이브러리를 사용하며, 기존 error-boundary와 차이점이 있는지 궁금증이 생겼다. node_modules에서 파일을 살펴보니, 생소한 내용이 많았지만 그중에서 몇몇 개의 낯익은 메서드를 확인할 수 있었다.
 
 ```
@@ -146,9 +152,9 @@ class ErrorBoundary extends react.Component {
         args[_key] = arguments[_key];
       }
       (_this$props$onReset =
-       (_this$props = this.props).onReset) === null 
-       || _this$props$onReset === void 0 
-       ? void 0 
+       (_this$props = this.props).onReset) === null
+       || _this$props$onReset === void 0
+       ? void 0
        : _this$props$onReset.call(_this$props, {
         args,
         reason: "imperative-api"
@@ -167,14 +173,14 @@ class ErrorBoundary extends react.Component {
 
     if (
       didCatch
-      && prevState.error !== null 
+      && prevState.error !== null
       && hasArrayChanged(prevProps.resetKeys, resetKeys)
       ) {
       var _this$props$onReset2, _this$props3;
       (_this$props$onReset2 =
        (_this$props3 = this.props).onReset) === null
-        || _this$props$onReset2 === void 0 
-       ? void 0 
+        || _this$props$onReset2 === void 0
+       ? void 0
        : _this$props$onReset2.call(_this$props3, {
         next: resetKeys,
         prev: prevProps.resetKeys,
@@ -222,6 +228,7 @@ class ErrorBoundary extends react.Component {
 ```
 
 ### resetErrorBoundary
+
 ### componentDidUpdate
 
 ### render
@@ -234,11 +241,11 @@ class ErrorBoundary extends react.Component {
 
 - ErrorBoundaryContext.Provider를 사용하여 에러 관련 상태를 컨텍스트로 제공하고, 선택된 자식 요소를 렌더링한다.
 
-<br/>
+<br />
 
 라이브러리 코드를 살펴본 뒤에 전체적인 코드를 이해하기에는 어려움이 있었지만, onReset, FallbackComponent 속성의 동작원리를 이해하는데 많은 도움이 되었다. 직접 클래스형 컴포넌트로 구현할 경우 내가 원하는 데로 더 작성할 수 있다는 생각이 들었지만, 현재로서는 라이브러리를 사용해도 충분하다는 생각이 들기 때문에 이번 프로젝트에는 라이브러리로 적용할 계획이다.
 
-<br/>
+<br />
 
 ## 직접 적용해 보기
 
@@ -265,7 +272,7 @@ export default ProductPage;
 
 부모 컴포넌트를 우선 살펴보면, Suspense 때와는 다르게 두 겹의 구조로 형성되어 있다. ErrorBoundary 처리가 필요한 자식 컴포넌트를 자체를 props로 넘겨 children으로 사용한다.
 
-<br/>
+<br />
 
 #### QueryErrorResetBoundary
 
@@ -273,10 +280,10 @@ export default ProductPage;
 
 > 쿼리에서 suspense 또는 throwOnError를 사용할 때 오류가 발생한 후 다시 렌더링 할 때 다시 시도하고 싶다는 것을 쿼리에 알리는 방법이 필요합니다. 구성 요소를 사용하면 QueryErrorResetBoundary 구성 요소 경계 내의 모든 쿼리 오류를 재설정할 수 있습니다.
 
-<br/>
+<br />
 
 - 내부적으로 콜백 함수를 반환하며, reset 인자를
-ErrorBoundary의 onReset 속성에 부여하면 FallbackComponent에서 렌더링 될 컴포넌트에서 사용할 수 있게 된다.
+  ErrorBoundary의 onReset 속성에 부여하면 FallbackComponent에서 렌더링 될 컴포넌트에서 사용할 수 있게 된다.
 
 - 가장 근접한 QueryErrorResetBoundary 컴포넌트 하위의 모든 오류 처리를 위임받고, 쿼리 오류를 재설정한다. (정의된 바운더리가 없다면 전역으로 재설정)
 
@@ -293,15 +300,17 @@ ErrorBoundary의 onReset 속성에 부여하면 FallbackComponent에서 렌더�
 </QueryErrorResetBoundary>
 ```
 
-<br/>
+<br />
 
 #### FallbackComponent
-- 에러가 발생했을 때 렌더링 될 컴포넌트를 배치할 수 있다.
-- 💡 단, ErrorFallback을 태그 형식인 ```<ErrorFallback>```가 아닌 ErrorFallback로 컴포넌트 명칭만 표기해야 한다.
 
-<br/>
+- 에러가 발생했을 때 렌더링 될 컴포넌트를 배치할 수 있다.
+- 💡 단, ErrorFallback을 태그 형식인 `<ErrorFallback>`가 아닌 ErrorFallback로 컴포넌트 명칭만 표기해야 한다.
+
+<br />
 
 #### ErrorFallback
+
 - error, resetErrorBoundary라는 두 개의 프로퍼티를 받는다. 각각 에러 객체와 에러 처리를 재시도할 때 사용할 수 있는 함수
 
 ```
@@ -319,7 +328,7 @@ export default ErrorFallback;
 
 - onClick 이벤트로 등록된 다시 시작 버튼을 클릭하면, resetErrorBoundary 함수가 실행되고 자식 컴포넌트에서 에러가 발생했던 요청을 재시도 하게 된다.
 
-<br/>
+<br />
 
 ### 자식 컴포넌트
 
@@ -362,12 +371,12 @@ export default ChildComponent;
 
 - Suspense와 함께 사용해야 할 경우에는 useQuery가 아닌 이번에 추가된 useSuspenseQuery를 사용할 수 있다. 단, useSuspenseQuery를 사용할 경우 throwOnError, suspense 옵션 사용이 불가능하다.
 
-<br/>
+<br />
 
 ## 테스트
 
-![](https://velog.velcdn.com/images/mintmin0320/post/432c41f5-1093-479c-84d2-f1d3f73d6bd2/image.png) 
-( 이번 테스트를 위해 오류가 발생했을 때 표시될 UI, 에러 메시지와 쿼리 재설정을 위한 버튼 제공 ) 
+![](https://velog.velcdn.com/images/mintmin0320/post/432c41f5-1093-479c-84d2-f1d3f73d6bd2/image.png)
+( 이번 테스트를 위해 오류가 발생했을 때 표시될 UI, 에러 메시지와 쿼리 재설정을 위한 버튼 제공 )
 
 ![](https://velog.velcdn.com/images/mintmin0320/post/d2249db6-c13a-4d57-8a91-864078e5bfb9/image.gif)
 
@@ -381,30 +390,33 @@ export default ChildComponent;
 
 - 개발 환경에서 테스트 할 경우 애플리케이션이 crash되며 종료된다.
 
-<br/> 
+<br />{' '}
 
 > 🤷‍♂️ 개발 환경에서는 왜 crash 상태가 다르게 발생할까?
 
 ![](https://velog.velcdn.com/images/mintmin0320/post/08cf594b-ccfe-40e8-acfd-d6e5c1529a9f/image.png)
 
-테스트를 위해 여러 시도를 거치던 중, 계속 검은 화면에 붉은 글씨로 에러가 표시되는 crash 화면으로 인해 많은 시간을 소모하게 되었다. 곧바로 에러가 발생했을 때 fallback 될 컴포넌트가 아닌 crash 화면이 발생하고 창을 닫았을 때야 확인할 수 있었기 때문에 코드를 잘못 작성한 줄 알고 있었다.. 😭 
+테스트를 위해 여러 시도를 거치던 중, 계속 검은 화면에 붉은 글씨로 에러가 표시되는 crash 화면으로 인해 많은 시간을 소모하게 되었다. 곧바로 에러가 발생했을 때 fallback 될 컴포넌트가 아닌 crash 화면이 발생하고 창을 닫았을 때야 확인할 수 있었기 때문에 코드를 잘못 작성한 줄 알고 있었다.. 😭
 
 #### GPT에게 문의한 결과
+
 - 개발 환경에서는 개발자가 오류를 놓치지 않고 즉시 해결해야 하기 때문에 오류를 더 명확하게 표시한다.
 - 프로덕션 환경에서는 사용자 경험을 최우선으로 고려하기 때문에 오류 처리 메커니즘이 오류 발생 시에 사용자에게 깔끔한 피드백을 제공하도록 구성되어 있다. (오류를 "잠재우는" 방식으로 처리)
 
 이외에도 핫 리로딩, 엄격 모드 등을 설명해 주고 있다. 알고 보니 개발 환경에서 오류 발생 시 더 명확하게 표시해 개발자에게 도움을 주는 고마운 역할을 하고 있었다.
 
-<br/>
+<br />
 
 ## 마치며
+
 react-error-boundary와 React Query에서 제공하는 기능들을 통해 기존 ErrorBoundary에 비해서 더욱 간단하게 구현이 가능해진 것 같다. Suspense를 사용했을 때 ErrorBoundary를 다뤄보고 싶다는 생각은 했지만 개발 환경에서 발생하는 crash를 보고 잘못 구현한 줄 알고 예상보다 많은 시간을 소모하게 됐다. 또한 평소에 가볍게 사용했던 기능들에 대해서 다시 생각해 보고 찾아보는 좋은 계기가 되었다. 단순히 공부만 하는 것이 아닌, 직접 프로젝트에 적용하는 과정에서 생각보다 신기하고 재미있었다.
 
-TanStack Query 기존 v4 버전에서 v5로 업그레이드에서 생각보다 많은 것들이 바뀐 것 같다. 이 과정에서 많은 사람들이 강조하는 공식 문서의 중요성을 다시금 깨달았다.. 당장 useSuspenseQuery 옵션을 적용하려고 계속 시도했지만 결국 실패하며 스트레스를 많이 받았었는데 알고 보니 throwOnError로 명칭이 바뀌었다는 사실을 뒤늦게 알게 되었다. <br/> 정말 많이 허탈했다.🤦‍♂️ 
+TanStack Query 기존 v4 버전에서 v5로 업그레이드에서 생각보다 많은 것들이 바뀐 것 같다. 이 과정에서 많은 사람들이 강조하는 공식 문서의 중요성을 다시금 깨달았다.. 당장 useSuspenseQuery 옵션을 적용하려고 계속 시도했지만 결국 실패하며 스트레스를 많이 받았었는데 알고 보니 throwOnError로 명칭이 바뀌었다는 사실을 뒤늦게 알게 되었다. <br/> 정말 많이 허탈했다.🤦‍♂️
 앞으로는 같은 실수를 반복하지 말고 공식 문서를 더 확인하도록 하자!
 
-
-<br/><br/><br/>
+<br />
+<br />
+<br />
 
 ## Reference
 

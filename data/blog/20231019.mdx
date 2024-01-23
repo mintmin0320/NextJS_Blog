@@ -4,13 +4,15 @@ date: '2023-10-19'
 tags: ['COMMA']
 draft: false
 summary: '식단 위젯, 디렉터리 구조, 컴포넌트 코드 개선'
+images: ['/static/images/thumbnail/comma-refactoring.png']
 ---
 
 본격적으로 프로젝트를 진행하기에 앞서, 중점적으로 개선하고 추가/제거/개선해야 할 부분을 찾기 위해 기존 프로젝트에서 느낀 문제점을 분석하고 이를 바탕으로 내용을 정리해 보고자 한다.
 
-<br/>
+<br />
 
 # 디렉터리 구조 변경
+
 - 기존 디렉터리의 경우 계층별로 구조를 나누어 관리했으나 프로젝트가 진행될수록 디렉터리의 개수가 늘어나게 되었다. 초기 refactoring 과정에서도 계층별 디렉터리 구조로 개발을 진행했으나 관련 파일이 사방에 계층별로 분리되어 작업하는데 불편함을 겪고는 했다.
 
 ```
@@ -18,13 +20,13 @@ comma
 └── components
     ├── shared
     │   └── (여러 기능이 공통으로 사용하는 코드)
-    ├── auth                                  
+    ├── auth
     ├── admin
     ├── basket
     ├── community
     ├── cafeteriaMenu
     ├── rental
-    ... 
+    ...
 ```
 
 특히 이번에 auth 관련 API 연동 로직을 React-Query를 적용해 커스텀 hook으로 만들게 되었다. 파일 및 코드가 적은 현 상황에서는 type, hook, component, constant을 공용으로 분리해도 괜찮겠지만 앞으로 다른 기능에서 발생하는 코드를 추가하게 되면 관련 내용을 찾는데 시간이 소모될 것 같다는 생각을 했다.
@@ -34,11 +36,11 @@ comma
 ```
 comma-refactor
   └──components
-     ├── shared 			
+     ├── shared
      │   └── (여러 기능이 공통으로 사용하는 코드)
-     └── auth                                  
+     └── auth
         ├── components
-        │   ├── JoinForm.tsx                       
+        │   ├── JoinForm.tsx
         │   ├── JoinForm.style.ts
       	│   ├── LoginForm.tsx
         │   └── LoginForm.style.ts
@@ -53,29 +55,35 @@ comma-refactor
 - 확실히 가독성이 좋다. 관련 기능이 밀집되어 있어 짧은 시간 안에 필요한 코드를 발견할 수 있다.
 - 우연히 [지역성의 원칙을 고려한 패키지 구조: 기능별로 나누기](https://ahnheejong.name/articles/package-structure-with-the-principal-of-locality-in-mind/) 아티클을 보고 관심을 가지게 되어 프로젝트에 적용해 보게 됐다.
 
-<br/>
+<br />
 
 ## 🤔 주관적인 장점과 단점?
-장점
-- 가독성의 이점으로 작업 속도가 향상된다.
-각 기능별 style, constant, hook, component, common, util 디렉터리를 분류하여 원하는 코드를 찾기 수월하다. 
 
-<br/>
+장점
+
+- 가독성의 이점으로 작업 속도가 향상된다.
+  각 기능별 style, constant, hook, component, common, util 디렉터리를 분류하여 원하는 코드를 찾기 수월하다.
+
+<br />
 
 단점
-- 디렉터리의 갯수가 많아진다.
-각 컴포넌트, 파일별로 디렉터리를 구성하게 되므로 디렉터리의 갯수가 많아진다.
 
-<br/>
-<br/>
+- 디렉터리의 갯수가 많아진다.
+  각 컴포넌트, 파일별로 디렉터리를 구성하게 되므로 디렉터리의 갯수가 많아진다.
+
+<br />
+<br />
 
 # 기존 COMMA 프로젝트에서 발생했던 문제점/피드백 받은 내용
+
 ## 1. 과도한 Get 메서드로 호출되는 API 요청
+
 - 날씨 위젯은 이번 리팩토링에서 제외
 
-<br/>
+<br />
 
 ### 기존 날씨 & 학식 위젯
+
 ![](https://velog.velcdn.com/images/mintmin0320/post/7202bae9-53f4-4d7e-83fa-8ce569caec6f/image.png)
 
 ### 학식 위젯 코드
@@ -114,21 +122,24 @@ useEffect(() => {
 ```
 
 ### 문제점 분석
+
 - useEffect hook으로 인해 컴포넌트가 생성(mount) 될 때마다 서버에 데이터를 요청하게 된다.
 - 좌측 위젯으로 모든 페이지에서 조회되기 때문에 페이지 이동 시 새로 생성되어 서버에 데이터를 요청하게 된다.
 
 > ❌ 식단의 경우 하루 단위로 메뉴가 갱신된다. 변경사항이 적은 데이터를 불필요하게 계속 요청하게 된다.
 
-<br/>
+<br />
 
 ### 해결 방법 (아직 식단 위젯 작업을 진행하지 않았기 때문에 상세 코드는 생략)
+
 - React-Query 라이브러리를 적용해 staleTime(만료) 옵션을 적용하면 staleTime 타임이 끝날 때까지 refetch가 되지 않는다.
 - staleTime 값을 긴 시간으로 설정하게 되면 하루가 지났을 때 학식이 갱신되지 않을 수 있다. 이를 방지하기 위해 새로고침 버튼을 배치해 수동으로 갱신 가능하도록 한다.
 
-<br/>
-<br/>
+<br />
+<br />
 
 # 컴포넌트 의존성 주입(코드 개선)
+
 - mutate를 return 하는 hook을 JoinForm 컴포넌트에서 직접 생성하거나 찾았다.
 - JoinForm 컴포넌트가 구체적인 구현 의존성이 아닌 인터페이스에 대한 의존성으로 변경하는 작업을 통해 JoinForm 컴포넌트는 부모 컴포넌트에서 props로 hook을 주입받아 사용하게 된다.
 - 재사용성 측면에서 JoinForm 컴포넌트를 재사용 하고 싶을 때, 다른 훅 구현을 주입하여 외부에서 hook 로직이 변경되어도 JoinForm 컴포넌트는 영향을 받지 않고 사용할 수 있다.
@@ -169,7 +180,7 @@ export default function JoinForm({
     status: '',            // 학적
     academicNumber: '',    // 학번
   });
-  const [code, setCode] = useState<string>(''); // 인증 코드 
+  const [code, setCode] = useState<string>(''); // 인증 코드
 
   // 이메일 인증 코드 요청
   const handleSendAuthCode = () => {
@@ -194,14 +205,16 @@ export default function JoinForm({
   };
 ```
 
-<br/>
-<br/>
-<br/>
+<br />
+<br />
+<br />
 
 # 마치며
+
 프로젝트를 진행하면서 기존 작성했던 리팩토링 코드에서 또 리팩토링을 하게 되는 상황이 발생했다. 더 나은 코드를 작성하고 있다는 부분에서 안도감이 들지만 아직 갈 길이 멀다는 뜻이라고 생각한다.
 
 초기 목표(중점사항)
+
 - 이미지, 폰트 최적화
 - 디렉터리 구조 정리
 - 프로젝트 배포
