@@ -61,13 +61,17 @@ export default function Home({ posts }) {
                       className="font-[400] pt-2 text-[13px] flex justify-center"
                       dateTime={date}
                     >
-                      {formatDate(date, siteMetadata.locale)}
+                      <p className="border border-b-[#000] dark:border-0 dark:border-b dark:border-b-[#fff] ">
+                        {formatDate(date, siteMetadata.locale)}
+                      </p>
                     </time>
                     <div className="space-y-2 xl:grid xl:grid-cols-3 xl:items-baseline xl:space-y-0 px-3 pt-2 pb-1">
                       <div className="space-y-5 xl:col-span-3">
                         <div className="space-y-6">
                           <div>
-                            <h2 className="font-bold leading-8 tracking-tight w-full ">{title}</h2>
+                            <h2 className="font-bold leading-8 tracking-tight w-full hover:text-primary-500">
+                              {title}
+                            </h2>
 
                             {/* <div className="flex flex-wrap">
                             {tags.map((tag) => (
