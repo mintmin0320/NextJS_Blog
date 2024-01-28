@@ -6,7 +6,12 @@ import ThemeSwitch from './ThemeSwitch'
 import SearchButton from './SearchButton'
 
 const Header = () => (
-  <header className="flex items-center justify-between p-4">
+  <header
+    className="flex items-center justify-around p-4 fixed top-0 w-full "
+    style={{
+      backdropFilter: 'blur(10px)',
+    }}
+  >
     <div className="sm:mb-0">
       <Link href="/" aria-label={siteMetadata.headerTitle}>
         <div className="flex items-center justify-between">

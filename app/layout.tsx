@@ -80,14 +80,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       />
       <meta name="google-site-verification" content="p8Py64RY_5tnNVrjLiGzdkZVoYju6Q6fpmeC0IRyeeI" />
       <link rel="alternate" type="application/rss+xml" href="/feed.xml" />
-      <body className="text-black antialiased dark:bg-gray-800 dark:text-white bg-zinc-100 w-full mx-auto">
+      <body className="text-black antialiased dark:bg-gray-800 dark:text-white bg-[#eeeeee]">
         <ThemeProviders>
           <Analytics analyticsConfig={siteMetadata.analytics as AnalyticsConfig} />
           <SectionContainer>
             <div className="flex-col justify-between font-sans">
               <SearchProvider searchConfig={siteMetadata.search as SearchConfig}>
                 <Header />
-                <main className="mb-auto">{children}</main>
+                <main className="w-8/12 pt-[72px] mx-auto">{children}</main>
                 <Footer />
               </SearchProvider>
             </div>
