@@ -173,8 +173,12 @@ export default SignIn
 
 1. input 필드에 공격할 문자열을 입력하면 유효하지 않은 src로 인해 onerror 속성이 동작 된다.
 2. onerror 속성에 공격하고 싶은 스크립트 DOM을 삽입한다. <br/>
-   `<img src="empty" onerror="console.log(window.localStorage);" />` <br/>
 
+```jsx
+<img src="empty" onerror="console.log(window.localStorage);" />
+```
+
+<br />
 <br />
 
 <center>
@@ -190,7 +194,10 @@ console log를 확인해 보면, 손쉽게 localStorage에 저장되어 있는 �
 <br />
 
 console이 아닌 alert도 사용해 잘 동작한다. <br/>
-`<img src="empty" onerror="alert('절대 보안');" />`
+
+```jsx
+<img src="empty" onerror="alert('절대 보안');" />
+```
 
 ![](https://velog.velcdn.com/images/mintmin0320/post/bcf7273a-1628-4a75-a95e-2148f4fe4773/image.gif)
 
@@ -207,7 +214,10 @@ console이 아닌 alert도 사용해 잘 동작한다. <br/>
 
 1. 비밀번호 input에 필드에 공격할 문자열을 입력하면 유효하지 않은 src로 인해 onerror 속성이 동작 된다.
 2. onerror 속성에 의해 공격자가 미리 만들어둔 페이지로 리다이렉트 되고 공격당하게 된다. <br/>
-   `<img src='x' onerror='window.location="http://localhost:3000/dangerous"'>`
+
+```jsx
+<img src='x' onerror='window.location="http://localhost:3000/dangerous"'>
+```
 
 <br />
 
@@ -234,7 +244,7 @@ console이 아닌 alert도 사용해 잘 동작한다. <br/>
 
 <br />
 
-`dangerouslySetInnerHTML`을 사용한 특수한 상황일 뿐, React에서 input 필드에 공격할 문자열(`<img src='x' onerror='window.location="http://localhost:3000/dangerous"'>`) 입력한다고 위 상황처럼 DOM에 직접적으로 삽입되지는 않는다. 왜냐하면 React는 JSX에서 중괄호 안에 포함된 변수나 표현식의 값에 대해 자동으로 이스케이프 처리를 하기 때문이다.
+`dangerouslySetInnerHTML`을 사용한 특수한 상황일 뿐, React에서 input 필드에 공격할 문자열(`<img src='x' onerror='console.log('공격')'>`) 입력한다고 위 상황처럼 DOM에 직접적으로 삽입되지는 않는다. 왜냐하면 React는 JSX에서 중괄호 안에 포함된 변수나 표현식의 값에 대해 자동으로 이스케이프 처리를 하기 때문이다.
 
 <br />
 
@@ -270,15 +280,17 @@ console이 아닌 alert도 사용해 잘 동작한다. <br/>
 
 </center>
 
-```
+````
+
 const html = '<img src="empty" onerror="console.log(window.localStorage);" />'
 
 return(
-   '''
-   <div id={html}>{html}</div>
-   '''
-)
-```
+'''
+
+{' '}
+
+<div id={html}>{html}</div>
+''' ) ```
 
 <br />
 
@@ -338,3 +350,8 @@ React에서 JSX를 사용하여 컴포넌트를 렌더링 할 때, 중괄호 {} 
 - [MDN XSS](https://developer.mozilla.org/ko/docs/Glossary/Cross-site_scripting)
 
 - [WIKIPEDIA](https://en.wikipedia.org/wiki/Cross-site_scripting)
+
+```
+
+```
+````
