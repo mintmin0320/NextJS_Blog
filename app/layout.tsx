@@ -87,7 +87,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="flex-col justify-between font-sans">
               <SearchProvider searchConfig={siteMetadata.search as SearchConfig}>
                 <Header />
-                <main className="w-8/12 pt-[72px] mx-auto">{children}</main>
+                <main className="w-9/12 pt-[72px] mx-auto flex justify-center">{children}</main>
                 <Footer />
               </SearchProvider>
             </div>
