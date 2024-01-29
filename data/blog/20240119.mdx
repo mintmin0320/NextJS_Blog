@@ -280,17 +280,14 @@ console이 아닌 alert도 사용해 잘 동작한다. <br/>
 
 </center>
 
-````
-
+```
 const html = '<img src="empty" onerror="console.log(window.localStorage);" />'
 
 return(
-'''
-
-{' '}
-
-<div id={html}>{html}</div>
-''' ) ```
+  <div id={html}>{html}</div>
+  '''
+)
+```
 
 <br />
 
@@ -350,8 +347,3 @@ React에서 JSX를 사용하여 컴포넌트를 렌더링 할 때, 중괄호 {} 
 - [MDN XSS](https://developer.mozilla.org/ko/docs/Glossary/Cross-site_scripting)
 
 - [WIKIPEDIA](https://en.wikipedia.org/wiki/Cross-site_scripting)
-
-```
-
-```
-````
