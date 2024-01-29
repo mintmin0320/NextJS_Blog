@@ -97,10 +97,15 @@ images: ['/static/images/thumbnail/XSS.png']
 
 ![](https://velog.velcdn.com/images/mintmin0320/post/0dfc9436-f5fe-4008-8f11-d6833ee60fee/image.png)
 
-`<img src="empty" onerror="console.log(window.localStorage);" />` <br />
-`dangerouslySetInnerHTML`로 DOM에 직접 삽입하면 위와 같은 형태가 된다.
-
 </center>
+
+```
+<img src="empty" onerror="console.log(window.localStorage);" />
+```
+
+<br />
+
+`dangerouslySetInnerHTML`을 사용해 DOM에 직접 삽입하면 위와 같은 형태가 된다.
 
 <br />
 <br />
