@@ -84,10 +84,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProviders>
           <Analytics analyticsConfig={siteMetadata.analytics as AnalyticsConfig} />
           <SectionContainer>
-            <div className="flex-col justify-between font-sans">
+            <div className="font-sans">
               <SearchProvider searchConfig={siteMetadata.search as SearchConfig}>
                 <Header />
-                <main className="w-9/12 pt-[72px] mx-auto flex justify-center">{children}</main>
+                <main className="w-full sm:w-8/12 pt-[72px] mx-auto ">{children}</main>
                 <Footer />
               </SearchProvider>
             </div>
