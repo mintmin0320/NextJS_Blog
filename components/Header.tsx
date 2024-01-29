@@ -10,6 +10,7 @@ const Header = () => (
     className="flex items-center justify-around p-4 fixed top-0 w-full "
     style={{
       backdropFilter: 'blur(10px)',
+      WebkitBackdropFilter: 'blur(10px)',
     }}
   >
     <div className="sm:mb-0">
