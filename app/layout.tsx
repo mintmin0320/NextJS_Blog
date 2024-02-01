@@ -87,7 +87,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="font-sans">
               <SearchProvider searchConfig={siteMetadata.search as SearchConfig}>
                 <Header />
-                <main className="w-full sm:w-8/12 pt-[72px] mx-auto ">{children}</main>
+                <main className="w-full sm:w-10/12 pt-[72px] mx-auto ">{children}</main>
                 <Footer />
               </SearchProvider>
             </div>

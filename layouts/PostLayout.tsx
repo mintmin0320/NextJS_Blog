@@ -39,7 +39,7 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
     <SectionContainer>
       <ScrollTopAndComment />
       <article className="flex justify-center">
-        <div className="xl:divide-y xl:divide-gray-200 xl:dark:divide-gray-700 w-full sm:w-8/12">
+        <div className="xl:divide-y xl:divide-gray-200 xl:dark:divide-gray-700 w-full sm:w-6/12">
           <header className="pt-6 xl:pb-6">
             <div className="space-y-1 text-center">
               <dl className="space-y-10">
