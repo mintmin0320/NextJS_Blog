@@ -1,0 +1,419 @@
+---
+title: 'Next는 처음이라 - Streaming을 적용하며 겪은 무한 루프 트러블 슈팅 '
+date: '2024-02-02'
+tags: ['트러블슈팅', '프로젝트', 'NEXT']
+draft: false
+summary: '프로젝트 진행 중 Suspense 실패 과정 기록하기'
+images: ['/static/images/thumbnail/streaming.avif']
+---
+
+아이템 리뷰 목록을 React-Query에서 제공하는 `useSuspenseInfiniteQuery`를 사용해 성공적으로 구현을 마치고 [Loading UI and Streaming](https://nextjs.org/docs/app/building-your-application/routing/loading-ui-and-streaming) 공식 문서에서 읽었던 Streaming을 적용하기 위해 Suspense를 사용하던 중 갑자기 계속 서버에 요청을 보내는 무한 루프가 발생해서 Streaming 구현에 큰 어려움을 겪게 됐다.
+
+무한 스크롤과 Suspense는 이미 직전 토이 프로젝트에서 이미 사용해 봤던 경험이 있었고 구현 결과에도 문제가 없었다. Suspense 적용 과정에서 문제가 발생하고 있으니 일단은 Suspense가 문제를 일으키고 있다는 것을 알 수 있다. 하지만 공식 문서를 준수했고 코드를 계속 살펴봐도 문제가 될만한 부분을 찾을 수 없었기 때문에 관련 내용을 검색해 봤지만 도무지 원인을 찾을 수가 없었다.
+
+<br />
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/c8f04bd7-dfff-4b76-a82b-081afc964786/image.png)
+
+### Suspense를 사용하는데 왜 무한 루프에 빠지는 걸까?
+
+<br />
+<hr />
+
+## 프로젝트 환경
+
+</center>
+
+- `Next14 - app Router`
+- `tanstack/react-query v5`
+- `tailwind CSS`
+
+<br />
+<hr />
+
+<center>
+
+## 🔍 단서 찾아보기
+
+<br />
+
+</center>
+
+`useSuspenseInfiniteQuery` 훅을 적용하면 계속된 요청으로 인해 무한 루프에 빠지게 된다. 네트워크 속도를 지연시키고 문제점을 찾아보면서 한 가지 이상한 부분을 발견했다. 바로 React Query Devtools가 보이지 않았는 것이다. Suspense를 적용하지 않았을 때는 정상적으로 Devtools를 발견할 수 있었다. 이때부터 queryClient에 문제가 있다는 의혹을 가지게 되었다.
+
+<br />
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/4bd3dc69-ffad-4128-94e9-5d56b3f12c4d/image.png)
+
+#### 우리에게 익숙한 이 아이콘(React Query Devtools)이 보이질 않는다?
+
+</center>
+
+<br />
+<hr />
+
+<center>
+
+# 기존 코드
+
+#### ( 아래 코드는 app/items/itemId 하위에 위치한다. )
+
+<br />
+
+### layout.tsx
+
+</center>
+
+```
+export default function DetailItemLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <RQProvider>{children}</RQProvider>
+  )
+}
+```
+
+<center>
+
+### page.tsx
+
+</center>
+
+```
+export default async function DetailPage() {
+  return (
+    ...
+      <ReviewSection itemInfo={itemData.itemInfo} />
+    ...
+  )
+}
+
+```
+
+<center>
+
+### ReviewSection.tsx
+
+</center>
+
+```
+export default function ReviewSection({ itemInfo }: ItemInfo) {
+  const { reviewList, fetchNextPage, isFetchingNextPage } =
+    useSearchItemQuery(itemInfo.id, sortOption)
+
+  return (
+    ...
+    {reviewList.map((review: ReviewResponse, index: number) => (
+      <Review
+        key={review.reviewSummary.reviewId}
+        review={review}
+        itemId={itemInfo.id}
+        isFirst={index === 0}
+      />
+    ))}
+    ...
+  )
+}
+```
+
+<br />
+
+Suspense를 사용했다고 하는데, 위 코드에서는 Suspense와 fullback을 찾아볼 수가 없다. 사실 글을 작성하기 전에 한 가지 방법을 발견했지만 글을 작성하며 근본적인 문제의 원인을 찾게 되었다. 결과적으로 내 실수로 인해 발생했기 때문에 정상적인 코드 작성으로 해결이 가능하지만 한 가지 방법을 더 발견하게 된 것이다. 따라서 이번 포스팅에서는 두 가지 모두 정리해 볼 계획이다.
+
+우선 문제의 근본적인 문제의 원인은 Suspense를 사용하지 않아서였다. 지금 생각해도 정말 황당하지만 Suspense를 사용했을 때에도 같은 문제가 발생해서 Suspense 없이 사용 가능한 방법을 찾았고 혹시나 하는 마음으로 글을 작성하며 다시 테스트해 본 결과 정상적으로 됐다. 그렇지만 당시에는 관련 지식을 알지 못하고 코드를 짰기 때문에 오히려 좋은 기회가 되었다. 그리고 문제를 분석하고 공부하는 과정에서 Suspense를 적용하는 위치에 문제가 있었다는 것을 알아냈다. 잘못된 위치에 Suspense를 사용해 문제가 발생했던 것이다.
+
+<br />
+<hr />
+
+<center>
+
+## 🔍 문제 상황 분석
+
+<br />
+
+</center>
+
+#### Suspense를 적용하지 않은 부분은 설명이 필요가 없다. 그렇다면 적용 위치에 문제가 있었다는 부분을 살펴볼 필요가 있다.
+
+![](https://velog.velcdn.com/images/mintmin0320/post/4305a9f5-b526-4e8a-9ade-889ff1ee298f/image.png)
+
+초기 목적은 `3. 리뷰 컴포넌트`에 Suspense를 사용해 SkeletonUI를 적용할 계획이었다. 그렇다면 사진 기준 1, 2, 3번 컴포넌트 중 어느 위치에 Suspense 경계를 위치시켜야 할까? 무한 스크롤로 리뷰 데이터를 받아오는 hook은 `2번 컴포넌트`에 위치하고 있다. 처음에 나는 `2번 컴포넌트` 안에 `3번 컴포넌트`를 감싸도록 Suspense를 사용했다.
+
+<br />
+
+<center>
+
+### ReviewSection.tsx (2번 리뷰 파트)
+
+</center>
+
+```
+export default function ReviewSection({ itemInfo }: ItemInfo) {
+  const { reviewList, fetchNextPage, isFetchingNextPage } =
+    useSearchItemQuery(itemInfo.id, sortOption)
+
+  return (
+    ...
+  <Suspense fallback={<ReviewSkeleton />}>
+    {reviewList.map((review: ReviewResponse, index: number) => (
+      <Review
+        key={review.reviewSummary.reviewId}
+        review={review}
+        itemId={itemInfo.id}
+        isFirst={index === 0}
+      />
+    ))}
+   </Suspense>
+  )
+}
+```
+
+위와 같이 사용하게 되면, `useSearchItemQuery`에서 데이터를 불러오는 과정에서 프로미스(Promise)를 던지게 된다. 그러나 이 프로미스를 잡는 상위 컴포넌트에서 Suspense가 없기 때문에 문제가 발생하게 된다. 그렇다, 바로 Suspense를 프로미스를 던지는 데이터 호출 상위 컴포넌트에 배치해야 했던 것이다.
+
+Suspense가 프로미스를 잡을 수 없으면 문제가 발생한다는 것은 알겠는데, 무한 루프에 빠지게 되는 이유가 궁금했다. 저번 게시글에 Suspense를 주제로 다뤘던 경험이 있었다. 어느 정도 Suspense에 대해 이해하고 있다고 생각했지만 아직 기본적인 부분도 놓치고 있었다.
+
+무한 루프에 빠지는 이유는, 프로미스는 던져졌지만 Suspense 경계가 없기 때문에 React는 해당 컴포넌트를 렌더링 할 수 없게 되고 부분적으로 컴포넌트 React Components Tree를 `폐기`하게 된다. 컴포넌트 트리가 폐기되면 문제가 될 수 있는 부분이 바로 queryClient가 있는 React-Query provider 부분이다.
+
+<br />
+
+<center>
+
+### RQProvider 코드
+
+</center>
+
+```
+'use client'
+
+import React, { useState } from 'react'
+import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+
+type Props = {
+  children: React.ReactNode
+}
+
+function RQProvider({ children }: Props) {
+  const [client] = useState(
+    new QueryClient({
+      defaultOptions: {
+        queries: {
+          refetchOnWindowFocus: false,
+          retryOnMount: true,
+          refetchOnReconnect: false,
+          retry: false,
+        },
+      },
+    }),
+  )
+
+  return (
+    <QueryClientProvider client={client}>
+      {children}
+      <ReactQueryDevtools
+        initialIsOpen={process.env.NEXT_PUBLIC_MODE === 'local'}
+      />
+    </QueryClientProvider>
+  )
+}
+
+export default RQProvider
+
+```
+
+RQProvider이라는 provider를 만들고 `layout.tsx`에 React Query를 사용하는 컴포넌트 상위에 배치해 사용하고 있었다. 컴포넌트 트리가 폐기가 queryClient에 미치는 영향을 순차적으로 살펴보자.
+
+<br />
+
+1. 초기에 `useSearchItemQuery`에서 queryClient에 캐시 된 데이터가 없음을 확인하고 서버에 데이터 요청을 보내고 프로미스를 던지게 된다.
+2. Suspense 경계의 부재로 프로미스를 잡지 못하고 트리가 `폐기`된다.
+3. `useSearchItemQuery` 데이터를 가져오게 되면 트리가 다시 렌더링 된다. 그리고 완전히 새로운 queryClient(캐시에 데이터 없음)가 다시 생성된다.
+4. `useSearchItemQuery`는 캐시에 저장된 데이터가 없기 때문에 또다시 요청을 보내게 되고 이 과정이 반복되며 무한 루프에 빠지게 되는 것이다.
+
+<br />
+
+이제 문제 상황을 인지했고, 1번 컴포넌트에서 Suspense를 사용해 2번 컴포넌트를 감싸면 문제를 간단하게 해결할 수 있다는 것을 알게 되었다. 하지만 이때 앞서 언급했던 방법을 사용하면 Suspense 없이도 무한 루프를 해결할 수 있다.
+
+<br />
+<hr />
+
+<center>
+
+## 💡 Solution - queryClient 재생성 방지하기
+
+<br />
+
+</center>
+
+현재 queryClient가 재생성 되고 있기 때문에 해결책은 클라이언트에서 하나만 만들고 유지하면 된다. queryClient를 전역 변수에 저장하여 초기 렌더링 중에 다시 초기화하지 않도록 하는 것이다. 이 경우 트리가 폐기되어도 queryClient가 유지된다.
+
+<center>
+
+<br />
+
+## RQProvider 코드 변경하기
+
+</center>
+
+```
+"use client";
+
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactNode } from "react";
+
+
+function makeQueryClient() {
+  return new QueryClient({ /* ...opts */ });
+}
+
+let clientQueryClient: QueryClient | undefined = undefined;
+
+function getQueryClient() {
+  if (typeof window === "undefined") {
+    // Server: always make a new query client
+    return makeQueryClient();
+  } else {
+    // Browser: make a new query client if we don't already have one
+    if (!clientQueryClient) clientQueryClient = makeQueryClient();
+    return clientQueryClient;
+  }
+}
+
+export const ClientProviders = ({ children }: { children: ReactNode }) => {
+  const queryClient = getQueryClient();
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      {children}
+    </QueryClientProvider>
+  );
+};
+```
+
+- #### getQueryClient 함수
+  클라이언트 사이드에서 QueryClient 인스턴스를 관리하는 함수다. 서버 사이드에서는 항상 새로운 QueryClient 인스턴스를 생성하지만, 클라이언트 사이드에서는 한 번만 생성하고, 그 후로는 동일한 인스턴스를 재사용한다.
+
+<br />
+
+위와 같이 사용하면 Streaming도 정상적으로 적용되고 queryClient가 재생성 되지 않기 때문에 무한 루프 되는 상황은 막을 수 있다. 하지만, React component tree가 버려지는 과정이 발생하기 때문에 지양하는 것이 좋다고 생각한다.
+
+<br />
+<hr />
+
+<center>
+
+### 이제 처음 진행하려고 했던 streaming을 계속 진행해 보자.
+
+<br />
+
+</center>
+
+기존 서버 사이드 렌더링의 경우 요청받은 페이지를 모두 렌더링 해서 내려줄 때까지 빈 페이지가 노출되고 다 내려받았다고 해도 React에서 하이드레이션 과정이 끝나야만 인터랙션이 가능해진다. CSR이 가지는 단점을 보완했지만 여전히 아쉬운 부분이 있다는 것이다. 문제는 이 모든 작업이 순차적으로 진행되는 데 있다.
+
+<center>
+
+<br />
+
+![](https://velog.velcdn.com/images/mintmin0320/post/14df2e96-4394-40b3-a585-6feee22c4e15/image.png)
+
+![](https://velog.velcdn.com/images/mintmin0320/post/2193f722-5019-408a-a34f-d151c21fcf34/image.png)
+
+#### 기존 SSR의 제한 사항
+
+<br />
+
+</center>
+
+기본적으로 SSR을 사용하면 사용자가 페이지를 보고 상호 작용하기까지 순차적으로 단계가 진행된다. HTML & CSS 렌더링이 진행되지만 JS 다운로드 및 실행, React에서의 hydrate 작업이 진행되기까지 인터랙션이 불가능한 상태가 된다.
+
+<center>
+
+<br />
+
+![](https://velog.velcdn.com/images/mintmin0320/post/d0aafb3e-feb4-4129-930f-6e43e945ce3d/image.gif)
+
+![](https://velog.velcdn.com/images/mintmin0320/post/62163623-923b-4e4d-809b-238a7a7037a8/image.png)
+
+#### 네트워크 속도를 지연시키고 확인해 본 결과 가장 후순위인 리뷰 목록이 마지막에 화면에 표시된다.
+
+</center>
+
+<br />
+<br />
+<hr />
+
+<center>
+
+## 서버 컴포넌트와 스트리밍
+
+![](https://velog.velcdn.com/images/mintmin0320/post/9d1c3da6-ce36-402b-b9e2-cdc7a4aa8744/image.png)
+
+![](https://velog.velcdn.com/images/mintmin0320/post/fc4067ac-a715-48c4-b612-147dd64ba832/image.png)
+
+<br />
+
+</center>
+
+서버 컴포넌트는 컴포넌트를 JSON으로 직렬화한 뒤에 클라이언트에 전송하고, 브라우저에서 이 결과물을 다시 역직렬화 과정을 거쳐 렌더링을 수행하게 된다. 이때 전송되는 방식이 바로 처음 공식 문서에서 Loading UI와 함께 거론된 내용인 `스트리밍(Streaming)`이다.
+
+작업을 순차적으로 진행하는 것이 아닌 HTML을 작은 단위로 쪼개서 완성되는 대로 클라이언트에 **_점진적_**으로 보낸다. 브라우저는 리액트 컴포넌트 트리를 구성할 때 스트리밍으로 받은 JSON 결과물을 바탕으로 트리를 재구성해 컴포넌트를 만든다. 이 결과 컴포넌트가 하나의 번들러에 포함돼 있지 않고 각각 별개로 번들링이 되기 때문에 개별적으로 컴포넌트 관리가 가능하고 클라이언트는 줄 단위로 JSON을 읽고 컴포넌트 렌더링이 가능해진다.
+
+프로젝트를 빌드 하면 `.next` 폴더에서 `.rsc` 형식으로 끝나는 파일에서 데이터를 확인할 수 있다. rsc는 무엇일까? 바로 앞서 계속 언급했던 React Server Components의 약자이다. 이 같은 데이터 형태를 **_와이어 포맷(wire format)_**이라고 한다.
+
+<center>
+
+<br />
+
+![](https://velog.velcdn.com/images/mintmin0320/post/c7ead0f6-90b3-459b-a0ae-ee42faeca1fa/image.png)
+
+> #### items.rsc 파일의 와이어 포맷 형태
+
+<br />
+<hr />
+
+## 스트리밍(Streaming) 적용 결과
+
+![](https://velog.velcdn.com/images/mintmin0320/post/f1c8a730-8df5-4b0d-8043-fc79c81cbd08/image.gif)
+
+![](https://velog.velcdn.com/images/mintmin0320/post/d9ab5097-cb0a-4d5e-a3f7-9838546661f8/image.png)
+
+</center>
+
+<br />
+
+적용 전과 후의 차이를 봤을 때 가장 눈에 띄는 부분은 폭포에서 확인할 수 있다. 스트리밍은 각 구성 요소가 따로 간주될 수 있기 때문에 UI가 렌더링 되기 전까지 모든 데이터가 기다리지 않고 페이지의 일부에 더 빨리 표시될 수 있는 것이다. 프로젝트에 적용한 예시의 경우 리뷰에서 사용되는 데이터인 프로필과 리뷰 사진, 아이콘이 먼저 클라이언트로 보내져 사용자가 결과를 확인할 수 있게 됐다.
+
+<br />
+<hr />
+
+<center>
+
+# 마치며
+
+<br />
+
+</center>
+
+내가 Suspense를 좀 더 이해하고 실수하지 않았다면 이번 문제를 겪을 일은 없었을 것이다. 하지만 이번에 이 문제를 마주하지 않았더라도 지금과 같은 상태에서는 언제든 벌어질 일이었다고 생각한다. 이번 문제는 버전 업된 Next 프레임워크에 대한 부족한 숙련도와 무한 스크롤 구현 과정에서 무한 루프에 빠진 부분에서 느낀 혼동 때문에 해결이 쉽지 않았던 것 같다. 그리고 가장 기억에 남는 부분은 프로미스를 잡을 Suspense 경계가 존재하지 않는다면, React Components tree를 버리는 과정이 발생한다는 것이다. 거기서 연결되는 queryClient 재생성까지 내가 예상하지 못한 많은 문제가 있었다.
+
+예전부터 문제가 발생했을 때 검색을 하면 관련 내용이 없을 때가 있었다. 그때마다 다시 코드를 살펴보면 오타 혹은 기본적인 문법의 규칙을 어겼을 때가 대다수였다. 이번 문제도 마찬가지다. 처음 Suspense를 사용했을 때 문제가 발생해 Suspense를 사용하지 않는 다른 방법을 찾고 있었지만 내가 찾는 결과에 대한 자료는 거의 없었다. 기본적으로 잘못된 위치에서 사용하고 있던 것이다. 최근에 프로젝트를 진행하며 단순 구현에만 초점을 두고 있었던 것 같다. 우연치 않게 트러블 슈팅을 진행하게 되었는데, 이번 일을 계기로 서버 컴포넌트, Suspense 등 기본적인 지식과 새로 알게 된 내용을 공부하고 정리할 수 있는 좋은 기회가 되었다.
+
+<br />
+<br />
+<br />
+<br />
+
+## Reference
+
+- [모던 리액트 Deep Dive](https://product.kyobobook.co.kr/detail/S000210725203)
+
+- [queryClient issues](https://github.com/TanStack/query/issues/6116)
+
+- [Loading UI and Streaming](https://nextjs.org/docs/app/building-your-application/routing/loading-ui-and-streaming)
