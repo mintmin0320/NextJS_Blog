@@ -9,7 +9,7 @@ const siteMetadata = {
   siteUrl: 'https://mintmin-dev-world.vercel.app',
   siteRepo: 'https://github.com/timlrx/tailwind-nextjs-starter-blog',
   siteLogo: '/static/images/hamin.PNG',
-  socialBanner: '/static/images/banner.jpeg',
+  socialBanner: '/static/images/banner2.jpg',
   // socialBanner: '/static/images/twitter-card.png',
   mastodon: 'https://mastodon.social/@mastodonuser',
   email: 'mintmin0320@gmail.com',
