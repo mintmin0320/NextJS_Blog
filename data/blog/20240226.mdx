@@ -7,8 +7,8 @@ summary: '프로젝트 진행 중 Suspense 실패 과정 기록하기'
 images: ['/static/images/thumbnail/QueryKeyFactory.webp']
 ---
 
-React Query를 사용해 Get 메서드로 데이터를 페칭하고 캐시 하는 작업을 진행하다 보면 queryKey가 필요하다. 기존 프로젝트에서는 queryKey를 따로 관리하지 않았다. <br/>
-각자 프로젝트 내에서 다른 도메인을 작업하고 있었고, 개수 또한 적었기 때문이다. 따라서 내가 리뷰 페이지 작업을 진행하고 있다면 `reviews`라는 key를 지정해 사용한 기억만 있으면 됐다. <br/>
+React Query를 사용해 Get 메서드로 데이터를 페칭하고 캐시 하는 작업을 진행하다 보면 queryKey가 필요하다. 기존 프로젝트에서는 queryKey를 따로 관리하지 않았다.
+각자 프로젝트 내에서 다른 도메인을 작업하고 있었고, 개수 또한 적었기 때문이다. 따라서 내가 리뷰 페이지 작업을 진행하고 있다면 `reviews`라는 key를 지정해 사용한 기억만 있으면 됐다.
 하지만, 프로젝트가 진행될수록 자연스럽게 queryKey의 개수도 많아졌고 기능을 병합하며 문제가 발생하기 시작했다.
 
 <center>
