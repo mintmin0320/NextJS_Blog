@@ -201,7 +201,7 @@ reviewList 메서드를 살펴보면 'list'라는 키워드를 확인할 수 있
 
 </center>
 
-라이브러리를 적용하면, 메서드명이 반영되기 때문에 굳이 새로운 키워드를 추가할 필요가 없다!
+라이브러리를 적용하면, 메서드명이 반영되기 때문에 굳이 새로운 키워드를 추가할 필요가 없다.
 
 <br />
 <hr />
@@ -272,7 +272,7 @@ export default function useReviewLikeAction() {
 
 처음 작성한 queryKey를 무효화하기 위해 QueryKeyFactory 구조에서 메서드를 호출했으나, 인자로 전달할 데이터(itemId, sortOption 등등)가 이 hook에는 없었기 때문에 어떻게 처리해야 될지 고민이 많았다.
 
-그렇게 `console.log()`를 사용해 천천히 확인해 본 결과 알고 보니 `._def`를 사용하면 reviewList 메서드에 해당하는 queryKey를 손쉽게 호출할 수 있었다.
+그러던 중에 `console.log()`를 사용해 값을 확인해 본 결과 알고 보니 `._def`를 사용하면 reviewList 메서드에 해당하는 queryKey를 손쉽게 호출할 수 있었다.
 
 <br />
 <hr />
