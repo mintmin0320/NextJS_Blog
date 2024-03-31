@@ -229,6 +229,8 @@ export const useCookies = (): Cookies => {
 
 - `useContext`를 사용해 전역 쿠키 관리
 - `typeof window === 'undefined' ? ctx : jsCookies`: **서버 사이드 렌더링 환경**과 **클라이언트 사이드 환경**을 **구분**
+- `get`, `set`, `remove` 메서드로 쿠키 **조회**, **설정**, **삭제**
+- 클라이언트에서는 js-cookie 라이브러리를 사용해 쿠키를 관리
 
 <br />
 
