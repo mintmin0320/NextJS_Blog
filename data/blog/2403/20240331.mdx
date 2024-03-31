@@ -1,0 +1,277 @@
+---
+title: 'Next.js(v14) - 클라이언트/서버에서 쿠키 사용하기 完'
+date: '2024-03-31'
+tags: ['트러블슈팅', '프로젝트', 'NEXT']
+draft: false
+summary: '클라이언트/서버 요청 응답 과정 중 쿠키에서 accessToken 값을 꺼내고 적용하던 중 발생한 이슈 完'
+images: ['/static/images/thumbnail/next-logo.png']
+---
+
+<center>
+
+👉 [1편](https://mintmin-dev-world.vercel.app/blog/20240316)
+
+</center>
+
+지난 게시글에서 문제를 해결하지 못하고 대략 1주라는 시간이 지났다. 문제 상황은 정확히 이해했으나, 여전히 해결 방법을 찾지 못했기 때문에 프로젝트 개발 내내 마음 한편에 불편한 존재로 남아있었다.
+
+<br />
+
+<center>
+
+## 문제 상황(1편) 요약
+
+![](https://velog.velcdn.com/images/mintmin0320/post/169b94a2-109b-4187-8b19-535172286dbe/image.png)
+
+### 📌 서버/클라이언트 요청/응답 과정 중 쿠키에서 값을 꺼낼 때 에러가 발생
+
+<br />
+
+</center>
+
+우선 내가 찾은 쿠키를 사용 방법은 두 가지인데,
+
+#### 1. 내장되어 있는 `next/headers` 사용
+
+- **초기 렌더링** 시 **서버 기능**(next/headers에서 제공하는 쿠키 사용 메서드)을 사용할 수 없다는 에러가 발생한다.
+- **Next 웹 서버**로의 **요청**은 에러가 발생하고 이후 **클라이언트 요청**은 정상적으로 진행되기 때문에 에러가 발생하지만 동작은 된다.
+
+<br />
+
+#### 2. `cookies-next` 라이브러리 사용
+
+- 초가에 라이브러리를 적용했을 때 별다른 에러 없이 잘 동작됐다.
+- 그러나 **새로고침** 시 `accessToken` 값이 유효하지 않다는 에러가 발생한다. `SSR` 시 **쿠키에서 값을 꺼내지 못하는 것**이다.
+- 클라이언트에서만 정상 동작
+
+<hr />
+
+<center>
+
+## 해결 방안?
+
+</center>
+
+해결 방안은 명확하다. `서버/클라이언트` 두 요청 과정에서 쿠키를 사용할 수 있는 방법을 찾는 것이다. 앞서 언급한 쿠키 사용방법 외에 다른 방법을 찾아봤으나 별다른 성과는 없었다.
+
+내게 필요한 관련 레퍼런스는 없었고 힘들게 `stackoverflow`에서 찾은 한 질문 글에서의 답변은 "Next의 결함인 것 같다."라는 슬픈 답변밖에 없었다.
+
+하지만 운명의 장난일까? 정말 마지막 시도로 며칠 만에 우연히 관련 키워드를 검색하던 중 2023년 10월에 작성된 한 외국 개발자분의 [블로그](https://moshe.io/posts/2023-10-02/how-i-solve-next.js-v13-cookies-for-server-side-rendering-ssr)를 발견하게 되었다.
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/18f5d8f0-191c-41b0-97b2-dd229fc21dfb/image.png)
+
+Next.js v13, 쿠키 사진, SSR ... 예감이 좋았다
+
+</center>
+
+<hr />
+
+조금 스크롤을 내리다 보면, **쿠키**와 관련된 내용이 언급된다. 나와 비슷한 고민들이 나열되어 있었고 결정적으로 `SSR` 시 **쿠키 액세스에 관한 문제를 지적**하고 있었다.
+
+(2023년 기준) 아직 공식적인 해결 방법이 제시되지 않았고 직접 해결할 필요성을 느꼈다는 내용이다. 그리고 이 문제 해결을 위해 직접 만든 라이브러리를 소개해 주신다.
+
+<br />
+<hr />
+
+<center>
+
+## 해결
+
+👉 [Next.js Client Cookies](https://github.com/moshest/next-client-cookies)
+
+</center>
+
+```
+npm install next-client-cookies
+
+or
+
+yarn add next-client-cookies
+```
+
+<br />
+
+#### 1. 최상위 or 각 layout.tsx에서 CookiesProvider 적용
+
+```tsx
+import { CookiesProvider } from 'next-client-cookies/server'
+
+export default function RootLayout({ children }) {
+  return <CookiesProvider>{children}</CookiesProvider>
+}
+```
+
+<br />
+
+#### 2. 각 코드 로직에 맞게 useCookies 훅 사용
+
+```tsx
+import { VoteDetailType } from '@/app/_types/detailVote.type'
+import { useSuspenseQuery } from '@tanstack/react-query'
+import { useCookies } from 'next-client-cookies'
+import { voteKeys } from '.'
+
+async function fetchVoteDetail(
+  voteId: number,
+  accessToken: string,
+): Promise<VoteDetailType> {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/votes/${voteId}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      cache: 'no-store',
+    },
+  )
+
+  const data = await res.json()
+
+  if (!res.ok) {
+    throw Error(data.message)
+  }
+
+  return data
+}
+
+export const useVoteDetail = (voteId: number) => {
+  const cookies = useCookies()  ⭐️
+  const accessToken = cookies.get('accessToken') ?? ''
+
+  const {
+    data: voteData,
+    isError,
+    isSuccess,
+  } = useSuspenseQuery<VoteDetailType, Error, VoteDetailType>({
+    queryKey: voteKeys.detail(voteId).queryKey,
+    queryFn: () => fetchVoteDetail(voteId, accessToken),
+    staleTime: 1000 * 60,
+  })
+
+  return { voteData, isError, isSuccess }
+}
+```
+
+<br />
+
+<center>
+
+## 결과 비교
+
+#### ❌ before
+
+![](https://velog.velcdn.com/images/mintmin0320/post/4bb84f53-1206-44d9-a67e-e4b461d0cf6d/image.gif)
+
+#### ⭕️ after
+
+![](https://velog.velcdn.com/images/mintmin0320/post/c9b6d1c5-29b6-4bde-8dda-0a32f9bd02e8/image.gif)
+
+</center>
+
+fetch 함수 코드 안에서 hook을 사용할 수 없기 때문에 어쩔 수 없이 accessToken을 인자로 넘기는 선택을 하게 되었는데, 이 과정을 더 효율적으로 사용할 수 있도록 추가적인 고민이 필요할 것 같다.
+
+<br />
+<hr />
+
+<center>
+
+## 라이브러리 분석해 보기
+
+</center>
+
+`CookiesProvider`와 `useCookies hook`을 보았을 때 쿠키를 상태 관리 라이브러이와 유사하게 **전역으로 관리**하려는 것 같다는 짐작을 했었는데, Github에서 `useCookies hook` 코드를 살펴보니 역시나 `React Context API`를 사용하고 있었다.
+
+<center>
+
+[hook.tsx](https://github.com/moshest/next-client-cookies/blob/main/src/hook.tsx)
+
+</center>
+
+<br />
+
+```
+import { useContext, useMemo, useState } from 'react';
+import { Cookies } from './types';
+import jsCookies from 'js-cookie';
+import { Ctx } from './context';
+
+export const useCookies = (): Cookies => {
+  const ctx = useContext(Ctx);
+  const [, refresh] = useState(0);
+
+  return useMemo((): Cookies => {
+    const org = typeof window === 'undefined' ? ctx : jsCookies;
+
+    if (!org) {
+      throw new Error('Missing <CookiesProvider>');
+    }
+
+    return {
+      get: org.get.bind(org),
+
+      set: (...args) => {
+        org.set(...args);
+        refresh((v) => v + 1);
+      },
+
+      remove: (...args) => {
+        org.remove(...args);
+        refresh((v) => v + 1);
+      },
+    };
+  }, [ctx]);
+};
+```
+
+- `useContext`를 사용해 전역 쿠키 관리
+- `typeof window === 'undefined' ? ctx : jsCookies`: **서버 사이드 렌더링 환경**과 **클라이언트 사이드 환경**을 **구분**
+
+<br />
+
+<center>
+
+[provider.tsx](https://github.com/moshest/next-client-cookies/blob/main/src/provider.tsx)
+
+</center>
+
+```
+const getCookieCommandHtml = (...command: CookieCommand) => (
+  <script
+    dangerouslySetInnerHTML={{
+      __html:`
+        window.${windowVarName} = window.${windowVarName} || [];
+        window.${windowVarName}.push(${JSON.stringify(
+          command,
+        ).replaceAll('</', '<\\/')});
+      `,
+    }}
+  />
+);
+```
+
+코드를 보던 중 낯익은 `dangerouslySetInnerHTML`를 발견할 수 있었다. `XSS 공격`과 같은 보안 위협을 동반하기 때문에 사용에 있어 주의가 필요한 속성인데 여기서 사용되고 있었다.
+
+`dangerouslySetInnerHTML`을 사용해 `<script>` 태그를 HTML 문서에 직접 삽입하는 방식으로 `서버 사이드 렌더링(SSR)` 환경에서 클라이언트 사이드에 `windowVarName` 전역 변수를 사용해 쿠키 관련 명령을 **저장**하고 **실행**한다.
+
+간단하게 `<script>` 태그에 **쿠키 저장**, **호출** 등의 명령어를 저장하고 `HTML 문서`에 삽입해 `SSR` 환경에서도 **쿠키**를 **호출**할 수 있던 것이다.
+
+<br />
+<hr />
+
+<center>
+
+## 마치며
+
+![](https://velog.velcdn.com/images/mintmin0320/post/e71ec82a-bccc-4c33-b90b-b914a759de66/image.png)
+
+</center>
+
+이렇게 오랫동안 해결하지 못한 문제는 처음이었기 때문에 서버/클라이언트에서의 쿠키 사용 방안은 나에게 항상 아픈 손가락으로 남아있었다. 많은 시간을 투자했고 결국에는 라이브러리로 해결했지만, 이 과정에서 SSR에 대한 견문도 넓힐 수 있었고 지긋지긋한 쿠키를 많이 사용해 볼 수 있었다.
+
+비록 이 라이브러리가 많은 사용자를 보유하고 검증된 라이브러리라고 하기에는 애매한 감이 있지만, 공식 문서와 다른 자료를 찾아봤을 때 뚜렷한 해결 방법을 찾지 못했기 때문에 당장은 이 방법으로 유지할 계획이다.
+
+매번 고통받으며 내가 이 문제를 해결한다면, 반드시 블로그에 글을 써서 이 고통의 굴레를 내 손으로 끊어내겠다는 다짐을 하곤 했었다. 이 라이브러리를 모르는 사람 또한 많으리라 생각하기 때문에 비슷한 고민을 하고 있는 개발자분들이 계시다면 조금이나마 도움이 됐으면 좋겠다.
