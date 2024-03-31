@@ -1,17 +1,11 @@
 ---
-title: 'Next는 처음이라 - SSR을 위해 쿠키에서 JWT 값 가져오기1'
+title: 'Next.js(v14) - 클라이언트/서버에서 쿠키 사용하기 1'
 date: '2024-03-16'
 tags: ['트러블슈팅', '프로젝트', 'NEXT']
 draft: false
-summary: 'SSR을 위해 쿠키에서 accessToken 값을 꺼내고 적용하던 중 발생한 이슈'
-images: ['/static/images/thumbnail/cookie.jpeg']
+summary: '클라이언트/서버 요청 응답 과정 중 쿠키에서 accessToken 값을 꺼내고 적용하던 중 발생한 이슈 1'
+images: ['/static/images/thumbnail/next-logo.png']
 ---
-
-<center>
-
-![](https://velog.velcdn.com/images/mintmin0320/post/4314fb22-2f82-450e-b3a1-9ec99d5ee7b1/image.png)
-
-</center>
 
 현재 구현 중인 투표 상세 페이지는 당연하게 투표 상세 정보 API 요청을 필요로 하게 된다. 요청을 보낼 때, 서버에서 이 페이지에 접속하는 유저의 정보를 식별 및 검증이 필요한데, 이번 프로젝트에서는 **JWT**를 사용해 **인가 과정**을 처리하기로 했다.
 
