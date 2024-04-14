@@ -1,0 +1,313 @@
+---
+title: '메모리를 절약하면서 React Portals 사용하기'
+date: '2024-04-13'
+tags: ['React']
+draft: false
+summary: '메모리 적용하면서 Portals를 사용할 수 있는 방법 정리'
+images: ['/static/images/thumbnail/portals.jpeg']
+---
+
+<center>
+
+![Jan-24-2024 18-32-45](https://github.com/uju-in/lime-frontend/assets/58348662/453703cb-08c8-4ac5-896f-b5ea7dc9e816)
+
+</center>
+
+프로젝트를 진행하다 보니 많은 모달을 사용하게 되었고 자연스럽게 모달 관리에 대한 고민을 하게 되었다. 조사 결과 친절하게도 React에서 이미 Portals라는 좋은 기능을 제공하고 있었다.
+
+사용 방법 또한 매우 간단하다. 그냥 createPortal 함수를 사용하면 된다. 이미 많은 포스팅이 존재하기 때문에 기본 개념은 자세하게 다루지 않으려고 한다. 그렇기 때문에 이번 포스팅으로 Portals를 주제로 선정하기에 애매한 감이 있었다.
+
+그렇지만, 포스팅을 하지 않더라도 프로젝트에 적용할 계획이 있었기 때문에 공식 문서 외에 많은 블로그 게시물을 참고하게 되었는데 외국인 개발자분이 작성한 Portals 관련 흥미로운 내용을 보고 포스팅을 결심하게 되었다.
+
+<br />
+<hr />
+
+<center>
+
+# 🤔 Portals?
+
+![](https://velog.velcdn.com/images/mintmin0320/post/2d5f37d8-d025-431e-aa42-2b7fe6d7ad5f/image.png)
+
+</center>
+
+게임 혹은 영화에서 포탈을 생각해 보면, 보통 어딘가로 이동하는 경우가 많다. 관련 공식 문서를 읽으며 내가 기존에 알고 있던 포탈과 얼추 비슷하다는 생각이 들었다.
+
+> Portal은 부모 컴포넌트의 DOM 계층 구조 바깥에 있는 DOM 노드로 자식을 렌더링하는 최고의 방법을 제공합니다.
+
+<br />
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/d1e8437e-df9a-484f-a181-3c1bcd458ef8/image.png)
+
+#### 🔍 부모 컴포넌트 DOM 계층(`<main>`) 밖에 존재
+
+</center>
+
+<br />
+
+Portal을 사용하는 컴포넌트는 React의 가상 DOM 트리 내에서는 특정 위치에 논리적으로 존재하면서, 실제 브라우저의 DOM 트리에서는 완전히 다른 위치에 물리적으로 렌더링 된다.
+
+모달 컴포넌트를 사용할 경우 모달 컴포넌트가 상위 컴포넌트 내부에 존재하자만, 모달 컴포넌트는 다른 위치에 존재하고 있는 것이다.
+
+<br />
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/c972382d-cde5-4a58-b0b4-712c0b0db36c/image.jpeg)
+
+</center>
+
+게시물의 썸네일 이미지 선정을 고민하며 가장 적절한 이미지가 무엇일까에 대한 고민을 하게 되었다. 곰곰이 고민해 봤을 때 **유체이탈**이 가장 적합하다는 생각이 들었다.
+
+**유체이탈**을 하게 될 경우 영혼은 육체를 벗어난 독립적인 상태(**물리적 분리**)가 되지만, 육체와 영혼은 같은 존재(**논리적으로 존재**)라고 다소 의역이 존재하지만, 이렇게 이해해도 무방할 것 같다.
+
+<br />
+
+#### 💡 완전하게 분리되는 것은 아니기 때문에 state, props에 의한 리렌더링이 발생한다.
+
+<br />
+<hr />
+
+**독립적인 컴포넌트 관리**, **이벤트 버블링** 등 많은 특징이 있지만 이번에 다룰 내용은 <u>**메모리 최적화**</u>와 관련된 부분이다. 성능 최적화를 몇 번 진행해 본 경험은 있었지만 메모리와 관련된 내용은 이번에 처음 다루어보게 되었다.
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/b8d9c720-3cae-425f-ba68-e62b46c7593f/image.png)
+
+#### 📌 메모리 측정과 관련해서 개발자 도구에 메모리와 성능 탭을 이용 가능하지만, 이번 측정에서는 성능 탭을 이용했다.
+
+</center>
+
+<br />
+<hr />
+
+<center>
+
+# 직접 사용해보기
+
+</center>
+
+```
+import { createPortal } from 'react-dom';
+
+// ...
+{showReviewModal &&
+   createPortal(
+      <ReviewModal
+         action="create"
+         itemData={itemInfo}
+         onReviewModal={setShowReviewModal}
+      />,
+      document.body
+   )
+}
+```
+
+모달 열기 버튼을 클릭하면 정상적으로 모달이 열리고 부모 컴포넌트의 자식 위치가 아닌 **body 태그**의 **하위 계층**으로 포함되게 된다.
+
+<br />
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/e48ec18b-f45b-4d10-ac96-40dac4372dd6/image.gif)
+
+</center>
+
+그리고 모달 닫기 버튼을 클릭하면 개발자 도구 요소 탭의 **DOM 트리 구조**에서 사라지게 된다. 그렇다면, 정말 모달을 닫는 순간에 깔끔하게 사라진다고 볼 수 있을까?
+
+<br />
+
+<center>
+
+![Jan-24-2024 18-32-45](https://github.com/uju-in/lime-frontend/assets/58348662/453703cb-08c8-4ac5-896f-b5ea7dc9e816)
+
+</center>
+
+이제 앞서 언급했던 **성능 탭**으로 **측정**을 진행하고, 조금 극단적이지만 보다 수월한 시각적 수치 파악을 위해 모달 열고 닫기를 **5번** 진행했다.
+
+<br />
+<hr />
+
+<center>
+
+## 최적화 전 메모리(JS Heap) 사용 측정
+
+![](https://velog.velcdn.com/images/mintmin0320/post/bb87ac08-10df-4b40-8596-639c020f3627/image.png)
+
+## 최적화 후 메모리(JS Heap) 사용 측정
+
+![](https://velog.velcdn.com/images/mintmin0320/post/9a86c04c-b673-47b8-8851-bd7d1753e10d/image.png)
+
+<br />
+
+> 💡 JS Heap:
+>
+> - 브라우저가 JS 객체를 저장하기 위해 사용하는 메모리의 양 <br/>
+> - 메모리 누수가 있을 경우, Heap 크기가 계속해서 증가하는 경향을 보인다.
+
+<br />
+
+- #### 최적화 전에는 JS Heap 수치가 보기 이쁜 계단식 형태로 우상향 되고 있다.
+- #### 최적화 후에는 JS Heap 수치가 증가 -> 감소를 반복하는 형태로 우상향 되고 있다.
+
+</center>
+
+<br />
+<hr />
+
+아직 최적화 작업에 대한 언급을 하지는 않았지만, 형태의 차이를 주목할 필요가 있다. 최적화 후 메모리 사용 형태가 **증가**와 **감소**를 반복하는 이유는 바로 **가비지 컬렉터**의 존재 때문이다.
+
+**가비지 컬렉터**는 사용되지 않는 메모리를 감지하고 회수하는 역할을 수행한다. 이 과정은 프로그램이 동작하는 동안 주기적으로 이루어지며, **메모리 사용량**을 효율적으로 관리하게 해 준다.
+
+그렇다. 모달을 열었을 때, `createPortal`으로 생성되는 **body** 하위 계층의 모달 컴포넌트를 생성하고 모달을 닫을 때 사용되는 메모리를 반납하는 것이다.
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/e48ec18b-f45b-4d10-ac96-40dac4372dd6/image.gif)
+
+</center>
+
+개발자 도구 요소 탭에 **DOM 트리**에서 사라지는 것처럼 보이지만, **메모리** 상에서는 정리되지 않아 **가비지 컬렉터**에 감지되지 않았던 것이다.
+
+<br />
+<hr />
+
+<center>
+
+## 🔍 Portals 메모리 최적화 코드로 알아보기
+
+[공식 문서](https://ko.legacy.reactjs.org/docs/portals.html)를 살펴보면 클래스형 컴포넌트로 해당 방법을 제시하고 있다.
+
+</center>
+
+```
+const appRoot = document.getElementById('app-root');
+const modalRoot = document.getElementById('modal-root');
+
+class Modal extends React.Component {
+  constructor(props) {
+    super(props);
+    this.el = document.createElement('div');
+  }
+
+  componentDidMount() {
+    modalRoot.appendChild(this.el);
+  }
+
+  componentWillUnmount() {
+    modalRoot.removeChild(this.el);
+  }
+
+  render() {
+    return ReactDOM.createPortal(
+      this.props.children,
+      this.el
+    );
+  }
+}
+...
+```
+
+생략된 코드가 있지만, 주목해야 할 부분은 `componentDidMount`와 `componentWillUnmount` 생명주기 메서드다. 간단히 말하면, 컴포넌트가 생성될 때 특정 **자식 노드를 추가**하고, 컴포넌트가 더 이상 필요하지 않을 때(모달 닫기) 정리를 위해 추가했던 **자식 노드**를 삭제하는 것이다.
+
+<br />
+
+**클래스 컴포넌트** 형태로 구현해도 되지만, 함수형 컴포넌트에서도 생명 주기를 관리할 수 있는 `useEffect` **hook**이 존재하기 때문에 이 훅을 사용해 **Portal**이라는 컴포넌트를 따로 만들어 주었다.
+
+<br />
+<hr />
+
+<center>
+
+### Portal.tsx
+
+</center>
+
+```
+import { ReactNode, useEffect } from 'react'
+import { createPortal } from 'react-dom'
+
+interface PropsType {
+  title: string
+  children: ReactNode
+}
+
+export default function Portal({ title, children }: PropsType) {
+  const el = document.createElement('div')
+  el.id = title
+
+  useEffect(() => {
+    document.body.appendChild(el)
+
+    return () => {
+      document.body.removeChild(el)
+    }
+  })
+
+  return createPortal(children, el)
+}
+```
+
+<br />
+
+<center>
+
+### 부모 컴포넌트.tsx
+
+</center>
+
+```
+{showReviewModal && (
+   <Portal title="review-modal">
+      <ReviewModal
+         action="create"
+         itemData={itemInfo}
+         onReviewModal={setShowReviewModal}
+      />
+   </Portal>
+)}
+```
+
+<center>
+
+- 여러 개의 모달을 관리하기 위해 각 `div` 태그에 `id`를 부여해 구분
+- `useEffect` 내에서 `return` 키워드를 사용해 `componentWillUnmount()` 메서드 역할 수행
+
+</center>
+
+<br />
+<br />
+<hr />
+
+<center>
+
+## 마치며
+
+<br />
+
+![](https://velog.velcdn.com/images/mintmin0320/post/e5cb8137-3314-48ff-b85d-3fe377420445/image.png)
+
+</center>
+
+<br />
+
+처음 **portals**를 찾았을 때 단순하게 기술을 적용하면 좋을 것 같다는 생각에 큰 생각 없이 도입을 계획하고 있었다. 예전 React 공식 문서를 봤을 때 클래스 컴포넌트로 구현된 코드를 보고 과거의 유물 같은 느낌이 들었지만 덕분에 **Portals** 사용에 대해 자세하게 생각해 볼 수 있는 계기가 되었다.
+
+`useCallback`, `memo`와 같이 무작정 사용하는 것은 큰 차이가 없거나 오히려 독이 될 수도 있는 상황이 발생하기도 한다. 마찬가지로 앞으로도 **Portals**를 비롯해 여러 **라이브러리**, **함수** 등을 사용할 때 여러 측면에서 고민해 보고 사용하도록 해야겠다.
+
+<br />
+<br />
+<hr />
+
+<center>
+
+## Reference
+
+</center>
+
+- [공식 문서](https://ko.legacy.reactjs.org/docs/portals.html)
+
+- [공식 문서2](https://react.dev/reference/react-dom/createPortal#createportal)
+
+- [Understanding the Power of React Portals: An In-Depth Analysis](https://www.dhiwise.com/post/understanding-the-power-of-react-portals-an-in-depth-analysis)
