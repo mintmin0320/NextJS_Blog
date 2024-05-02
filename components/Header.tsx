@@ -7,7 +7,7 @@ import SearchButton from './SearchButton'
 
 const Header = () => (
   <header
-    className="flex items-center justify-around p-4 fixed top-0 w-full "
+    className="flex items-center justify-around p-4 fixed top-0 w-full mo:justify-between"
     style={{
       backdropFilter: 'blur(10px)',
       WebkitBackdropFilter: 'blur(10px)',

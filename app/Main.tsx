@@ -39,8 +39,9 @@ export default function Home({ posts }) {
         <ul className="divide-y divide-gray-200 dark:divide-gray-500 place-content-center grid grid-cols-[repeat(auto-fill,280px)] gap-y-[142px] gap-x-[22px] mo:grid-cols-1">
           {!posts.length && 'No posts found.'}
           {posts.slice(0, MAX_DISPLAY).map((post, index) => {
-            const isFirstOrLast = index % 4 === 0 || index % 4 === 3
-            // const isFirstOrLast = index % 2 === 0
+            // const randomBoolean = Math.random() >= 0.6
+            // const isFirstOrLast = index % 4 === 0 || index % 4 === 3
+            const isEven = index % 2 === 0
             const { slug, title, tags, images, date } = post
 
             return (
@@ -48,7 +49,7 @@ export default function Home({ posts }) {
                 key={slug}
                 href={`/blog/${slug}`}
                 className={`rounded-[16px] w-[280px] transition-transform duration-300 hover:scale-105 mo:w-full ${
-                  isFirstOrLast ? 'h-[258px]' : 'h-[215px]'
+                  isEven ? 'h-[258px]' : 'h-[215px]'
                 }`}
               >
                 <li className="rounded-[16px] dark:bg-[#424242] h-full w-full mb-10">
@@ -56,9 +57,9 @@ export default function Home({ posts }) {
                     src={images?.[0] ?? '/path/to/default/image.jpg'}
                     alt="thumbnail"
                     width={280}
-                    height={isFirstOrLast ? 258 : 215}
+                    height={isEven ? 258 : 215}
                     className={`rounded-[16px] border mo:w-full
-                    ${isFirstOrLast ? 'h-[258px]' : 'h-[215px]'}`}
+                    ${isEven ? 'h-[258px]' : 'h-[215px]'}`}
                   />
 
                   <article>
