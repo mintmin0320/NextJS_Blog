@@ -10,7 +10,7 @@ import 'css/tailwind.css'
 import Skill from '@/components/Skill'
 
 // 메인 페이지 표시할 post 갯수 지정
-const MAX_DISPLAY = 8
+const MAX_DISPLAY = 12
 
 export default function Home({ posts }) {
   return (
@@ -36,32 +36,36 @@ export default function Home({ posts }) {
             </div>
           )}
         </div>
-        <ul className="divide-y divide-gray-200 dark:divide-gray-500 sm:grid sm:grid-cols-4 sm:grid-rows-2 sm:gap-8">
+        <ul className="divide-y divide-gray-200 dark:divide-gray-500 place-content-center grid grid-cols-[repeat(auto-fill,280px)] gap-y-[142px] gap-x-[22px] mo:grid-cols-1">
           {!posts.length && 'No posts found.'}
-          {posts.slice(0, MAX_DISPLAY).map((post) => {
+          {posts.slice(0, MAX_DISPLAY).map((post, index) => {
+            const isEven = index % 2 === 0 ? true : false
             const { slug, title, tags, images, date } = post
+
             return (
               <Link
                 key={slug}
                 href={`/blog/${slug}`}
-                className="rounded-[16px] transition-transform duration-300 hover:scale-105 shadow-[5px_5px_20px_3px_rgba(0,0,0,0.2)]"
+                className={`rounded-[16px] w-[280px] transition-transform duration-300 hover:scale-105 mo:w-full ${
+                  isEven ? 'h-[258px]' : 'h-[160px]'
+                }`}
               >
-                <li className="bg-[#e9e9e9] rounded-[16px] dark:bg-[#424242] h-full mb-10">
-                  <div className="h-[200px] rounded-t-[16px]">
-                    <Image
-                      src={images?.[0] ?? '/path/to/default/image.jpg'}
-                      alt="avatar"
-                      width={192}
-                      height={192}
-                      className="h-[200px] w-screen rounded-t-[16px]"
-                    />
-                  </div>
+                <li className="rounded-[16px] dark:bg-[#424242] h-full w-full mb-10">
+                  <Image
+                    src={images?.[0] ?? '/path/to/default/image.jpg'}
+                    alt="thumbnail"
+                    width={280}
+                    height={isEven ? 258 : 160}
+                    className={`rounded-[16px] border mo:w-full
+                    ${isEven ? 'h-[258px]' : 'h-[160px]'}`}
+                  />
+
                   <article>
                     <time
                       className="font-[400] pt-2 text-[13px] flex justify-center"
                       dateTime={date}
                     >
-                      <p className="border border-b-[#000] dark:border-0 dark:border-b dark:border-b-[#fff] ">
+                      <p className="border border-x-0 border-t-0 border-b-[#000] dark:border-0 dark:border-b dark:border-b-[#fff] ">
                         {formatDate(date, siteMetadata.locale)}
                       </p>
                     </time>

@@ -18,6 +18,10 @@ module.exports = {
       boxShadow: {
         custom: '0px 4px 6px rgba(0, 0, 0, 0.1)',
       },
+      screens: {
+        mo: { max: '767px' },
+        tablet: { min: '768px', max: '1024px' },
+      },
       animation: {
         pulseAnimation: 'pulseAnimation 3s infinite',
       },

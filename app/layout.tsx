@@ -10,8 +10,6 @@ import Footer from '@/components/Footer'
 import siteMetadata from '@/data/siteMetadata'
 import { ThemeProviders } from './theme-providers'
 import { Metadata } from 'next'
-import ScrollProgressBar from '@/components/ScrollProgressBar'
-import Video from '@/components/Video'
 
 const space_grotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -87,7 +85,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="font-sans">
               <SearchProvider searchConfig={siteMetadata.search as SearchConfig}>
                 <Header />
-                <main className="w-full sm:w-10/12 pt-[72px] mx-auto ">{children}</main>
+                <main className="px-[110px] pt-[64px] pb-[90px] mo:px-[16px]">{children}</main>
                 <Footer />
               </SearchProvider>
             </div>

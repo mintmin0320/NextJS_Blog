@@ -40,7 +40,7 @@ const MobileNav = () => {
           navShow ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="flex justify-end">
+        <div className="flex justify-end bg-[#F2F2F2] relative h-screen">
           <button className="mr-8 mt-11 h-8 w-8" aria-label="Toggle Menu" onClick={onToggleNav}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -56,12 +56,12 @@ const MobileNav = () => {
             </svg>
           </button>
         </div>
-        <nav className="fixed mt-8 h-full">
+        <nav className="absolute top-0 left-0 mt-8">
           {headerNavLinks.map((link) => (
             <div key={link.title} className="px-12 py-4">
               <Link
                 href={link.href}
-                className="text-2xl font-bold tracking-widest text-gray-900 dark:text-gray-100"
+                className="text-2xl font-bold tracking-widest text-gray-900 bg-green dark:text-gray-100"
                 onClick={onToggleNav}
               >
                 {link.title}
