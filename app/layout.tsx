@@ -1,15 +1,15 @@
 import 'css/tailwind.css'
 import 'pliny/search/algolia.css'
 
-import { Space_Grotesk } from 'next/font/google'
-import { Analytics, AnalyticsConfig } from 'pliny/analytics'
-import { SearchProvider, SearchConfig } from 'pliny/search'
+import Footer from '@/components/Footer'
 import Header from '@/components/Header'
 import SectionContainer from '@/components/SectionContainer'
-import Footer from '@/components/Footer'
 import siteMetadata from '@/data/siteMetadata'
-import { ThemeProviders } from './theme-providers'
 import { Metadata } from 'next'
+import { Space_Grotesk } from 'next/font/google'
+import { Analytics, AnalyticsConfig } from 'pliny/analytics'
+import { SearchConfig, SearchProvider } from 'pliny/search'
+import { ThemeProviders } from './theme-providers'
 
 const space_grotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -76,7 +76,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
       />
-      <meta name="google-site-verification" content="p8Py64RY_5tnNVrjLiGzdkZVoYju6Q6fpmeC0IRyeeI" />
+      <meta name="google-site-verification" content="iVEG-M-WRluKGv7Fe-kt5Y_tsPTqi_Fm4LX_L6EU-FE" />
       <link rel="alternate" type="application/rss+xml" href="/feed.xml" />
       <body className="text-black antialiased dark:bg-gray-800 dark:text-white bg-white">
         <ThemeProviders>
