@@ -250,7 +250,7 @@ export default ErrorBoundary
 
 적용 방법은 매우 간단지만, 주의 사항이 몇 가지 있다.
 
-1. `useSuspenseQuery`를 사용할 경우 **Suspense** 컴포넌트를 먼저 적용할 컴포넌트 상위에 래핑하고 사용하기 (**무한 루프 발생 위험**) - [참고](https://mintmin-dev-world.vercel.app/blog/20240202)
+1. `useSuspenseQuery`를 사용할 경우 **Suspense** 컴포넌트를 먼저 적용할 컴포넌트 상위에 래핑하고 사용하기 (**무한 루프 발생 위험**) - [참고](https://mintmin.dev/blog/2402/20240202)
 2. **ErrorBoundary** 컴포넌트에 `QueryErrorResetBoundary` 컴포넌트에서 제공하는 **쿼리 에러 상태 초기화 역할**을 하는 **매개변수와 fallback을 처리하는 로직이 필요**하다.
 
 <br />
