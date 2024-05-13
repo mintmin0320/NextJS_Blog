@@ -5,9 +5,9 @@ import Footer from '@/components/Footer'
 import Header from '@/components/Header'
 import SectionContainer from '@/components/SectionContainer'
 import siteMetadata from '@/data/siteMetadata'
+import { Analytics } from '@vercel/analytics/react'
 import { Metadata } from 'next'
 import { Space_Grotesk } from 'next/font/google'
-import { Analytics, AnalyticsConfig } from 'pliny/analytics'
 import { SearchConfig, SearchProvider } from 'pliny/search'
 import { ThemeProviders } from './theme-providers'
 
@@ -80,12 +80,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <link rel="alternate" type="application/rss+xml" href="/feed.xml" />
       <body className="text-black antialiased dark:bg-gray-800 dark:text-white bg-white">
         <ThemeProviders>
-          <Analytics analyticsConfig={siteMetadata.analytics as AnalyticsConfig} />
           <SectionContainer>
             <div className="font-sans">
               <SearchProvider searchConfig={siteMetadata.search as SearchConfig}>
                 <Header />
                 <main className="px-[110px] pt-[64px] pb-[90px] mo:px-[16px]">{children}</main>
+                <Analytics />
                 <Footer />
               </SearchProvider>
             </div>
