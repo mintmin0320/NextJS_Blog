@@ -1,0 +1,270 @@
+---
+title: 'Suspense를 사용해 네트워크 폭포 현상을 병렬처리로 개선하기'
+date: '2024-06-10'
+tags: ['리팩터링']
+draft: false
+summary: '네트워크 폭포 현상을 병렬처리로 개선하는 리팩터링 작업'
+images: ['/static/images/thumbnail/itemDetail_refactoring.png']
+---
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/a62ff7c9-faa4-4bf7-bb4b-d455a0a50a16/image.png)
+
+[이미지 출처](https://www.instagram.com/p/CI2ahDjnOp8/?img_index=1)
+
+<br />
+
+</center>
+
+최근까지 진행했던 **라임** 프로젝트가 종료되면서 그동안 충분히 고민하고, 진행하지 못했던 코드 리팩터링을 진행하게 되었다.
+
+다른 기능에서는 주로 모달/시맨틱 작업을 진행했고, 이번 포스팅 대상인 아이템 상세 페이지의 경우 다른 기능과 동일한 작업 + 네트워크 폭포 현상 개선 작업을 진행하게 되었다.
+
+<hr />
+
+<center>
+
+## 📌 기존 아이템 상세 페이지
+
+![](https://velog.velcdn.com/images/mintmin0320/post/8d15ff22-3ed4-4864-b4f2-6543790ae4c9/image.png)
+
+</center>
+
+기존
+
+1. 아이템 정보 데이터를 패칭하는 비동기 api 요청에서 응답받은 정보(아이템명, 가격, 아이템 id 등등)가 리뷰 컴포넌트에서 사용됨
+
+2. 따라서, 리뷰 영역을 <b>1 ( 아이템 정보 영역에 하위 컴포넌트 )</b>로 배치해 props로 데이터를 전달
+
+<br />
+<hr />
+
+<center>
+
+## 📌 문제점
+
+<br />
+
+</center>
+
+### 1. 좋지 않은 사용자 경험을 제공할 수 있다.
+
+![](https://velog.velcdn.com/images/mintmin0320/post/201c42a6-1a87-44ec-a237-ed22a2a8d150/image.gif)
+
+빠르게 화면이 렌더링 돼서 명확한 확인이 어려울 수도 있지만, 자세히 살펴보면 아이템 정보 영역이 우선 렌더링 된 후에 리뷰 영역이 렌더링 되며 스켈레톤 UI가 노출된다.
+
+아이템 정보 영역 하위에 리뷰 영역이 위치하기 때문에 폭포 현상이 발생하는 것은 당연하다고 볼 수 있다. 그리고 이 폭포 현상으로 인해 부분적인(아이템 -> 리뷰 렌더링) 화면 렌더링이 진행되는 부분이 나쁜 사용자 경험을 줄 수도 있다.
+
+> 💡 뒤늦게 렌더링 되는 리뷰 영역이 기존 아이템 영역과 대비되어 렌더링이 거슬리게 보일 수 있다.
+
+<br />
+<hr />
+
+### 2. 총 요청 소요 시간이 증가하게 된다.
+
+<center>
+
+<br />
+
+![](https://velog.velcdn.com/images/mintmin0320/post/c7e11a94-65f5-4f43-97b7-471d8a2b4845/image.png)
+
+</center>
+
+3 (아이템 상세 정보 요청), review?itemId~ (리뷰 데이터 요청) 두 데이터 패칭 같은 경우 폭포 현상이 발생해 순차적으로 진행되게 되고, 총 약 127 밀리초의 시간이 경과된다.
+
+<br />
+<hr />
+
+<center>
+
+## 📌 Solution
+
+![](https://velog.velcdn.com/images/mintmin0320/post/f5f814fb-8294-4e2a-801e-6a9a1f4dcb4e/image.png)
+
+</center>
+
+1. 우선 컴포넌트의 구조를 변경할 필요가 있다. 기존 `ItemDetailView` 컴포넌트 하위에 있던 `ReviewSection` 컴포넌트를 같은 계층에 위치시켜 주었다.
+
+2. 각각의 데이터 패칭 같은 경우 비동기 요청이기 때문에 완료되는 시간이 보장되지 않는다. 따라서 일전에 사용했던 `Suspense`를 사용해 `Suspense`로 래핑 된 요청이 모두 종료되도록 사용해 주었다.
+
+<br />
+<hr />
+
+<center>
+
+### 📌 현재 코드
+
+<br />
+
+ItemDetailView.tsx
+
+</center>
+
+```
+export default function ItemDetailView(props: Props) {
+  const { itemId } = props
+
+  const { itemData } = useItemDetail(itemId) 📌
+
+  const { itemInfo, hobbyName } = itemData
+
+  return (
+    <>
+      <Breadcrumb hobbyName={hobbyName} innerClassNames="mo:hidden" />
+      <ItemDetail itemData={itemData} />
+      <div
+        className={cn('hidden h-[8px] bg-[#EEE]', 'mo:mt-[16px] mo:block')}
+      />
+      <ErrorHandlingWrapper
+        fallbackComponent={ErrorFallback}
+        suspenseFallback={<ReviewSectionSkeletonUI />}
+      >
+        <ReviewSection itemInfo={itemInfo} /> 📌
+      </ErrorHandlingWrapper>
+    </>
+  )
+}
+```
+
+<center>
+
+### ReviewSection.tsx
+
+</center>
+
+```
+export default function ReviewSection(props: PropsType) {
+  const { itemInfo } = props
+
+  const [showReviewModal, setShowReviewModal] = useState(false)
+  const [sortOption, setSortOption] = useState<SortOption>('NEWEST')
+
+  const { data, reviewList, fetchNextPage, isFetchingNextPage, hasNextPage } =
+    useSearchItemQuery(itemInfo.id, sortOption) 📌
+
+  return (
+    <article className={cn('mt-[64px]', 'mo:mt-[28px] mo:px-[16px]')}>
+      ...
+      {/** 리뷰 작성 모달 */}
+      {showReviewModal && (
+        <ReviewModal
+          action="create"
+          itemData={itemInfo}
+          setShowReviewModal={setShowReviewModal}
+        />
+      )}
+    </article>
+  )
+}
+
+```
+
+부적절한 네이밍, 시맨틱 태그 활용, 모달 분리 코드 작성 등, 다른 문제도 보이지만, 내가 리팩터링을 진행하며 발견한 가장 큰 문제는 network waterfall(폭포) 현상이 발생한다는 것이다.
+
+리뷰 영역은 아이템 상세 정보 데이터 패칭이 끝나야 비로소 아이템 상세 정보에서 응답받은 정보를 활용해 리뷰 리스트 정보를 패칭하게 된다.
+
+보다 자세한 내용을 확인하기 위해서는 네트워크 탭에서 위 두 가지 요청 비교해 살펴보면 된다.
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/e123458f-bc21-439c-8559-ed3d9578794f/image.png)
+
+</center>
+
+`ItemDetailView` 컴포넌트에서 아이템 정보 패칭 ( `useItemDetail` ) 한 뒤에 `ReviewSection` 컴포넌트에서 리뷰 정보를 패칭 ( `useSearchItemQuery` ) 하게 된다.
+
+<br />
+<hr />
+
+<center>
+
+### 📌 최종 코드
+
+</center>
+
+```tsx
+type PropsType = {
+  params: { itemId: number }
+}
+
+export default function DetailPage({ params }: PropsType) {
+  const { itemId } = params
+
+  return (
+    <main className={cn('mx-auto mt-[32px] min-h-[650px] w-[720px]', 'mo:w-full')}>
+      <ErrorHandlingWrapper fallbackComponent={ErrorFallback} suspenseFallback={<Loading />}>
+        <Suspense fallback={<ItemDetailSkeleton />}>
+          <ItemDetailSection itemId={itemId} />
+        </Suspense>
+        <div className={cn('hidden h-[8px] bg-[#EEE]', 'mo:mt-[16px] mo:block')} />
+        <Suspense fallback={<ReviewSectionSkeletonUI />}>
+          <ReviewSection itemId={itemId} />
+        </Suspense>
+      </ErrorHandlingWrapper>
+    </main>
+  )
+}
+```
+
+<br />
+<hr />
+
+<center>
+
+## 📌 성과
+
+![](https://velog.velcdn.com/images/mintmin0320/post/cb3852ae-2cfd-4fc2-a63b-18d3874d93c2/image.gif)
+
+</center>
+
+이제 아이템과 리뷰의 정보를 동시에 요청 및 종료하기 때문에 기존에 각각의 영역이 개별적(아이템 영역이 이후 리뷰 영역 렌더링)으로 진행되는 현상을 방지할 수 있다.
+
+<br />
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/c7e11a94-65f5-4f43-97b7-471d8a2b4845/image.png)
+
+</center>
+
+또한, 성능적인 측면에서 기존에는 순차적으로 요청이 진행되는 폭포 현상이 발생해 두 요청이 모두 종료되기까지 총 약 127 밀리초가 소모됐는데,
+
+<center>
+
+<br />
+
+### 📌 기존
+
+![](https://velog.velcdn.com/images/mintmin0320/post/e123458f-bc21-439c-8559-ed3d9578794f/image.png)
+
+### 📌 리팩터링 후
+
+![](https://velog.velcdn.com/images/mintmin0320/post/2a5742f2-9cb4-453a-bcab-e8544c27cb3e/image.png)
+
+</center>
+
+리팩터링 과정에서 요청을 병렬로 처리해 가장 많은 요청 시간이 소모되는(아이템 데이터 패칭) 74 밀리초 후에 요청이 종료되고, 두 가지 요청 데이터를 렌더링 한 뒤에 화면에 노출된다.
+
+<br />
+
+<br />
+<hr />
+
+<center>
+
+## 마치며
+
+![](https://velog.velcdn.com/images/mintmin0320/post/e5cb8137-3314-48ff-b85d-3fe377420445/image.png)
+
+</center>
+
+<br />
+
+초기에 **아이템 상세 & 리뷰 페이지**를 개발을 하면서 한 페이지에 많은 기능(아이템 상세 및 리뷰 정보, 찜, 삭제, 등록, 수정, 리뷰 모달 등등)이 존재했기 때문에 코드도 많고 복잡하다는 느낌을 스스로도 많이 받았다.
+
+이번에 프로젝트를 되돌아보며 전역 상태 관리 라이브러리(Recoil)와 Suspense, 컴포넌트 구조 변경을 활용하면 충분히 기존의 문제점들을 해결할 수 있을 것 같다는 생각을 했고, 대부분 일전에 사용했던 기술이기 때문에 큰 어려움 없이 곧바로 리팩터링 작업을 진행할 수 있었다.
+
+지금도 고치려고 노력하고 있지만, 개발을 진행할 때면 구현에만 집중해 코드의 퀄리티가 낮아질 때가 있다. 물론 당시에는 더 나은 방법을 모를 수도 있고, 빠르게 구현이 필요한 상황도 있다.
+
+그래서 내가 내린 결론은, 상황에 맞게 행동하되 이번처럼 주기적으로 내가 작성한 코드를 되돌아보며 리팩터링 작성하기 위한 과정이 필요하다는 생각이 들었다. 앞으로 내가 기술적으로 더 성장해서 이번 보다 더 나은 코드를 작성하기 위해 노력하자.
