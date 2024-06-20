@@ -17,9 +17,9 @@ images: ['/static/images/thumbnail/itemDetail_refactoring.png']
 
 </center>
 
-최근까지 진행했던 **라임** 프로젝트가 종료되면서 그동안 충분히 고민하고, 진행하지 못했던 코드 리팩터링을 진행하게 되었다.
+최근까지 진행했던 라임 프로젝트가 종료되면서 내가 작성한 코드에 대해 충분히 고민할 수 있는 시간적인 여유가 생겼고, 어느 정도 마무리 작업을 마친 뒤에 곧바로 리팩터링 진행을 진행했다.
 
-다른 기능에서는 주로 모달/시맨틱 작업을 진행했고, 이번 포스팅 대상인 아이템 상세 페이지의 경우 다른 기능과 동일한 작업 + 네트워크 폭포 현상 개선 작업을 진행하게 되었다.
+투표 페이지에서는 주로 모달/시맨틱 작업을 진행했고, 이번 포스팅 대상인 아이템 상세 페이지의 경우 다른 기능과 동일한 작업 + 네트워크 폭포 현상 개선 작업을 최우선 목표로 선정했다.
 
 <hr />
 
@@ -31,7 +31,7 @@ images: ['/static/images/thumbnail/itemDetail_refactoring.png']
 
 </center>
 
-기존
+### 기존
 
 1. 아이템 정보 데이터를 패칭하는 비동기 api 요청에서 응답받은 정보(아이템명, 가격, 아이템 id 등등)가 리뷰 컴포넌트에서 사용됨
 
@@ -52,9 +52,9 @@ images: ['/static/images/thumbnail/itemDetail_refactoring.png']
 
 ![](https://velog.velcdn.com/images/mintmin0320/post/201c42a6-1a87-44ec-a237-ed22a2a8d150/image.gif)
 
-빠르게 화면이 렌더링 돼서 명확한 확인이 어려울 수도 있지만, 자세히 살펴보면 아이템 정보 영역이 우선 렌더링 된 후에 리뷰 영역이 렌더링 되며 스켈레톤 UI가 노출된다.
+빠르게 화면이 렌더링 돼서 명확한 확인이 어려울 수도 있지만, 자세히 살펴보면 **아이템 정보 영역이 우선 렌더링 된 후에 리뷰 영역이 렌더링 되며 스켈레톤 UI가 노출**된다.
 
-아이템 정보 영역 하위에 리뷰 영역이 위치하기 때문에 폭포 현상이 발생하는 것은 당연하다고 볼 수 있다. 그리고 이 폭포 현상으로 인해 부분적인(아이템 -> 리뷰 렌더링) 화면 렌더링이 진행되는 부분이 나쁜 사용자 경험을 줄 수도 있다.
+아이템 정보 영역 하위에 리뷰 영역이 위치하기 때문에 **네트워크 폭포 현상**이 발생하는 것은 당연하다고 볼 수 있다. 그리고 이 폭포 현상으로 인해 부분적인(아이템 -> 리뷰 렌더링) 화면 렌더링이 진행되는 부분이 **나쁜 사용자 경험**을 줄 수도 있다.
 
 > 💡 뒤늦게 렌더링 되는 리뷰 영역이 기존 아이템 영역과 대비되어 렌더링이 거슬리게 보일 수 있다.
 
@@ -71,7 +71,7 @@ images: ['/static/images/thumbnail/itemDetail_refactoring.png']
 
 </center>
 
-3 (아이템 상세 정보 요청), review?itemId~ (리뷰 데이터 요청) 두 데이터 패칭 같은 경우 폭포 현상이 발생해 순차적으로 진행되게 되고, 총 약 127 밀리초의 시간이 경과된다.
+아이템 상세 정보 요청 (3), 리뷰 데이터 요청 (review?itemId~) 두 데이터 패칭 같은 경우 **네트워크 폭포 현상**이 발생해 **순차적**으로 진행되게 되고, **총 약 127 밀리초**의 시간이 경과된다.
 
 <br />
 <hr />
@@ -160,11 +160,7 @@ export default function ReviewSection(props: PropsType) {
 
 ```
 
-부적절한 네이밍, 시맨틱 태그 활용, 모달 분리 코드 작성 등, 다른 문제도 보이지만, 내가 리팩터링을 진행하며 발견한 가장 큰 문제는 network waterfall(폭포) 현상이 발생한다는 것이다.
-
 리뷰 영역은 아이템 상세 정보 데이터 패칭이 끝나야 비로소 아이템 상세 정보에서 응답받은 정보를 활용해 리뷰 리스트 정보를 패칭하게 된다.
-
-보다 자세한 내용을 확인하기 위해서는 네트워크 탭에서 위 두 가지 요청 비교해 살펴보면 된다.
 
 <center>
 
@@ -172,14 +168,14 @@ export default function ReviewSection(props: PropsType) {
 
 </center>
 
-`ItemDetailView` 컴포넌트에서 아이템 정보 패칭 ( `useItemDetail` ) 한 뒤에 `ReviewSection` 컴포넌트에서 리뷰 정보를 패칭 ( `useSearchItemQuery` ) 하게 된다.
+현재 작성한 코드의 문제점은 네트트워크 탭을 살펴보면 명확하게 확인할 수 있다. `ItemDetailView` 컴포넌트에서 아이템 정보 패칭 ( `useItemDetail` ) 한 뒤에 `ReviewSection` 컴포넌트에서 리뷰 정보를 패칭 ( `useSearchItemQuery` ) 하고 있다. 이로인해 불필요한 시간이 지연되고 있었다.
 
 <br />
 <hr />
 
 <center>
 
-### 📌 최종 코드
+### 📌 리팩터링 코드
 
 </center>
 
@@ -208,6 +204,35 @@ export default function DetailPage({ params }: PropsType) {
 ```
 
 <br />
+
+<center>
+
+### ErrorHandlingWrapper
+
+</center>
+
+```tsx
+export default function ErrorHandlingWrapper({
+  children,
+  fallbackComponent: FallbackComponent,
+  suspenseFallback: SuspenseFallback,
+}: PropsType) {
+  return (
+    <QueryErrorResetBoundary>
+      {({ reset }) => (
+        <ErrorBoundary onReset={reset} FallbackComponent={FallbackComponent}>
+          <Suspense fallback={SuspenseFallback}>{children}</Suspense>
+        </ErrorBoundary>
+      )}
+    </QueryErrorResetBoundary>
+  )
+}
+```
+
+데이터 패칭이 진행되는 두 개 ( 아이템, 리뷰 ) 의 컴포넌트를 하나의 `Suspense` 로 래핑 한 뒤에 각 fallback에 스켈레톤 UI를 추가해 주었다. 이로써 가장 상위에 있는 `Suspense`
+에 의해 두 요청이 동시에 진행되게 된다.
+
+<br />
 <hr />
 
 <center>
@@ -218,7 +243,7 @@ export default function DetailPage({ params }: PropsType) {
 
 </center>
 
-이제 아이템과 리뷰의 정보를 동시에 요청 및 종료하기 때문에 기존에 각각의 영역이 개별적(아이템 영역이 이후 리뷰 영역 렌더링)으로 진행되는 현상을 방지할 수 있다.
+이제 아이템과 리뷰의 정보를 동시에 요청 및 종료하기 때문에 기존에 각각의 영역이 개별적 ( 아이템 영역이 이후 리뷰 영역 렌더링 )으로 진행되는 현상을 방지할 수 있다.
 
 <br />
 
@@ -263,8 +288,8 @@ export default function DetailPage({ params }: PropsType) {
 
 초기에 **아이템 상세 & 리뷰 페이지**를 개발을 하면서 한 페이지에 많은 기능(아이템 상세 및 리뷰 정보, 찜, 삭제, 등록, 수정, 리뷰 모달 등등)이 존재했기 때문에 코드도 많고 복잡하다는 느낌을 스스로도 많이 받았다.
 
-이번에 프로젝트를 되돌아보며 전역 상태 관리 라이브러리(Recoil)와 Suspense, 컴포넌트 구조 변경을 활용하면 충분히 기존의 문제점들을 해결할 수 있을 것 같다는 생각을 했고, 대부분 일전에 사용했던 기술이기 때문에 큰 어려움 없이 곧바로 리팩터링 작업을 진행할 수 있었다.
+이번에 프로젝트를 되돌아보며 전역 상태 관리 라이브러리(Recoil)와 `Suspense`, 컴포넌트 구조 변경을 활용하면 충분히 기존의 문제점들을 해결할 수 있을 것 같다는 생각을 했고, 대부분 일전에 사용했던 기술이기 때문에 큰 어려움 없이 곧바로 리팩터링 작업을 진행할 수 있었다.
 
 지금도 고치려고 노력하고 있지만, 개발을 진행할 때면 구현에만 집중해 코드의 퀄리티가 낮아질 때가 있다. 물론 당시에는 더 나은 방법을 모를 수도 있고, 빠르게 구현이 필요한 상황도 있다.
 
-그래서 내가 내린 결론은, 상황에 맞게 행동하되 이번처럼 주기적으로 내가 작성한 코드를 되돌아보며 리팩터링 작성하기 위한 과정이 필요하다는 생각이 들었다. 앞으로 내가 기술적으로 더 성장해서 이번 보다 더 나은 코드를 작성하기 위해 노력하자.
+그래서 내가 내린 결론은, 상황에 맞게 행동하되 이번처럼 주기적으로 내가 작성한 코드를 되돌아보며 리팩터링 작성하기 위한 과정이 필요하다는 생각이 들었다. 앞으로 내가 기술적으로 더 성장해서 이번 보다 더 나은 코드를 작성하기 위해 노력할 필요가 있다.
