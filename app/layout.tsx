@@ -9,6 +9,7 @@ import { Analytics } from '@vercel/analytics/react'
 import { Metadata } from 'next'
 import { Space_Grotesk } from 'next/font/google'
 import { SearchConfig, SearchProvider } from 'pliny/search'
+import GoogleAnalytics from './GoogleAnalytics'
 import { ThemeProviders } from './theme-providers'
 
 const space_grotesk = Space_Grotesk({
@@ -79,6 +80,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <meta name="google-site-verification" content="iVEG-M-WRluKGv7Fe-kt5Y_tsPTqi_Fm4LX_L6EU-FE" />
       <link rel="alternate" type="application/rss+xml" href="/feed.xml" />
       <body className="text-black antialiased dark:bg-gray-800 dark:text-white bg-white">
+        {process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS ? (
+          <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS} />
+        ) : null}
         <ThemeProviders>
           <SectionContainer>
             <div className="font-sans">
