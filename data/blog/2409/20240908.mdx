@@ -1,0 +1,398 @@
+---
+title: 'React Query 사용 여부에 대한 고민 + 성능 최적화 - ( with. Next 프로젝트 )'
+date: '2024-09-08'
+tags: ['리팩터링']
+draft: false
+summary: 'Next 프로젝트를 리팩터링하며 느낀 고민 기록'
+images: ['/static/images/thumbnail/20240908.webp']
+---
+
+## 현 프로젝트에서 React Query를 꼭 사용해야 할까?
+
+지금껏 여러 프로젝트를 진행하며 빠짐없이 사용할 만큼 <b>React Query</b>에서 제공하는 기능은 개발을 하는 데 있어서 매우 유용하게 사용했다.
+
+그리고 이번 우연히 프로젝트 또한 자연스럽게 적용하게 되었는데, 성능 최적화를 진행하던 중, 문득 <b>React Query 사용해야 하는지에 대한 의문</b>이 들었다.
+
+<br />
+
+이와 같이 고민하게된 이유는 크게 2가지인데,
+
+1. 프로젝트의 성격
+
+   지방적 사고 프로젝트 같은 경우 <b>지속적인 서비스 제공이 아닌 일회성 컨텐츠</b>를 제공하고, <b>적은 개수의 API와 캐싱이 필요하지 않은 데이터</b>가 요구된다.
+
+   또한 <b>무한 스크롤, 페이지네이션도 사용되지 않기 때문에 딱히 React Query를 사용한다고 해서 큰 효과를 기대하기 어려울 것</b> 같다고 생각했다.
+
+   물론 React Query에서 제공하는 기능을 사용하게 된다면 더 간단하게 서버 데이터를 관리할 수 있을지도 모른다.
+
+   하지만, <b>미라클 한 기적이 없다고 판단해 React Query를 사용하지 않고 42 KB의 실리를 추구</b>하기로 했다.
+
+   <br />
+
+2. Next 서버 컴포넌트 & 서버 렌더링의 이점
+
+   서버 렌더링을 진행하게 되면, 성능 부분에서의 이점을 가질 수 있게 되는데, <b>서버 컴포넌트는 그 자체로 React Component이기 때문에 JS 번들과 상관없이 브라우저에서 컴포넌트로 사용</b>된다.
+
+   즉, <b>JS 번들 크기를 줄였으므로 FCP, TTI를 포함해 전체적인 성능 개선에 영향을 줄 수 있다고 생각</b>한다.
+
+   그리고 서버 렌더링 자체에서 동일한 요청을 할 경우 <b>기존 캐싱 된 결과를 재사용해 렌더링 및 페칭 양을 줄일 수 있기 때문에</b> 캐싱의 아쉬움을 어느 정도 달랠 수 있을 것이다.
+
+<br />
+<hr />
+
+## React Query -> 서버 렌더링 방식으로 변경하기 ( 코드 )
+
+대중교통수단 선택 페이지에서 예시로 리팩터링을 진행할 예정이다. 주 목표는 React Query로 진행하던 교통수단 리스트 데이터 페칭을 서버 컴포넌트를 활용해 서버 렌더링 방식으로 개선하는 것이다.
+
+<br />
+
+<center>
+
+## 기존 코드
+
+### TransitRouteSection.tsx
+
+</center>
+
+```tsx
+'use client'
+
+import Loading from '@/shared/@common/ui/Loading'
+import LocationInputGroup from '@/shared/@common/ui/LocationInputGroup'
+import TransitList from './TransitList'
+
+import TransitRoutes from '../hooks/TransitRoutes'
+
+const TransitRouteSection = () => {
+  const { transitList, locationState, isLoading } = TransitRoutes()
+
+  if (isLoading) return <Loading />
+
+  return (
+    <section>
+      <LocationInputGroup locationState={locationState} type="view" />
+      <TransitList transits={transitList?.transits ?? []} />
+    </section>
+  )
+}
+
+export default TransitRouteSection
+```
+
+<center>
+
+### useTransitRoutes.ts
+
+</center>
+
+```
+import {
+   useGetTransitList
+} from '@/shared/provincial/api/queries/useGetTransitList'
+
+const useTransitRoutes = () => {
+  const { transitList, isLoading } = useGetTransitList()
+
+  const locationState = {
+    origin: transitList?.origin ?? '',
+    destination: transitList?.destination ?? '',
+  }
+
+  return {
+    transitList,
+    locationState,
+    isLoading,
+  }
+}
+export default useTransitRoutes
+```
+
+<center>
+
+### useGetTransitList.ts
+
+</center>
+
+```
+import { useQuery } from '@tanstack/react-query'
+import { useCookies } from 'next-client-cookies'
+
+import { getTransitData } from '@/actions/transit'
+import {
+  ITransitRouteResponseProps
+} from '@/shared/@common/types/transitRoute.types'
+
+export const useGetTransitList = () => {
+  const cookies = useCookies()
+  const userId = cookies.get("userId")
+
+  const { data: transitList, isLoading } =
+   useQuery<ITransitRouteResponseProps, Error>({
+    queryKey: ["transitList", userId],
+    queryFn: () =>  getTransitData(Number(userId)),
+    enabled: !!userId,
+    staleTime: 1000 * 600,
+    gcTime: 1000 * 700,
+    throwOnError: true
+  })
+
+  return { transitList, isLoading }
+}
+```
+
+<br />
+<hr />
+
+<center>
+
+## 개선 코드
+
+### TransitRouteSection.tsx
+
+</center>
+
+```tsx
+import LocationInputGroup from '@/shared/@common/ui/LocationInputGroup'
+import TransitList from './TransitList'
+
+import { fetchTransitList } from '@/shared/provincial/api/fetchTransitList'
+
+const TransitRouteSection = async () => {
+  const transitList = await fetchTransitList()
+
+  const routeAddresses = {
+    origin: transitList.origin,
+    destination: transitList.destination,
+  }
+
+  return (
+    <section>
+      <LocationInputGroup routeAddresses={routeAddresses} type="view" />
+      <TransitList transits={transitList.transits ?? []} />
+    </section>
+  )
+}
+
+export default TransitRouteSection
+```
+
+<center>
+
+### fetchTransitList.ts
+
+</center>
+
+```
+import { cookies } from 'next/headers'
+
+export async function fetchTransitList() {
+  const userId = cookies().get('userId')?.value
+
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/api/transit?userId=${userId}`
+  )
+
+  const data = await res.json()
+
+  return data
+}
+```
+
+1. TransitRoutes 컴포넌트는 서버 컴포넌트 page.tsx 하위에 위치한 폴더로 우선 이 컴포넌트를 서버 컴포넌트로 변경하기 위해 React Query 관련 로직을 포함한 hook을 걷어낸다.
+2. fetch를 이용해 교통수단 리스트를 페칭하는 로직을 작성한다.
+
+<br />
+
+리팩터링을 진행하고 나서 코드와 결과물을 살펴봤을 때 React Query를 적용했을 때와 별다른 차이가 없음을 느꼈다. 프로젝트의 규모가 작다 보니 이 부분에서는 큰 차이가 없는 것 같다.
+
+그러나 이 결과가 lighthouse로 측정해 봤을 때 작은 성과가 있었기 때문에 소기의 목적은 어느 정도 달성했다고 생각한다.
+
+<br />
+<hr />
+
+## 성능 최적화
+
+<center>
+
+### 기존 lighthouse 성능 점수
+
+![](https://velog.velcdn.com/images/mintmin0320/post/6bba7c22-008b-4ef3-9950-2491ee3c9247/image.png)
+
+</center>
+
+lighthouse를 사용해 초기 성능 점수를 측정했을 때, 생각보다 낮은 것을 발견하고 조금 당황스러웠다. 나름 기존에 진행해 왔던 최적화 작업을 개발 중에 적용하였음에도 <b>80</b>점이라는 점수가 나왔기 때문이다.
+
+lighthouse와 WebPageTest 사이트를 이용해 원인을 분석한 결과 빠르게 원인을 파악할 수 있었는데, 문제의 원인은 바로 <b>폰트</b>였다.
+
+<br />
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/41de8d18-c29b-4af0-8be2-25c922a5d2ff/image.png)
+
+</center>
+
+그동안에는 Next에서 제공하는 <b>next/font/local</b>를 사용해 폰트를 자동으로 최적화 및 관리하고 있었다. 다만, 최적화 외에 평균 700 kb의 폰트 파일이 나에게는 눈엣 가시처럼 남아있었다.
+
+그리고 역시나 이 폰트의 크기가 문제로 작용하고 있었다. 이미지의 형식을 변경해 크기를 줄이는 방법은 알고 있었지만, <b>폰트 경량화</b> 경험은 없었기 때문에 여러 레퍼런스 탐구 및 경량화 시도가 필요했다.
+
+<br />
+<hr />
+
+## 폰트 서브셋 경량화
+
+폰트 경량화를 위해 선택한 방법은 바로 <b>폰트 서브셋 경량화 작업</b>으로, <b>전체 폰트 파일에서 실제로 사용되는 문자만을 포함한 작은 크기의 폰트 파일을 생성하는 방법</b>이다.
+
+이해하기 쉽게 요약하면, 내가 필요한 문자 `가`, `나`, `A`, `1`과 같은 문자 외에 `끾`, `꾺` 등 사용하지 않는 문자를 제거하는 방식이다.
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/7e9419d9-0090-4203-8ce8-7b1a17e700d0/image.png)
+
+#### 서브셋 폰트 메이커
+
+</center>
+
+서브셋 경량화를 위한 첫 시도로 일본어로 제공되는 [서브셋 폰트 메이커](https://opentype.jp/subsetfontmk.htm) 서비스를 사용해 보게 됐는데, 서브셋 경량화는 정상적으로 진행됐으나 <b>글자 깨짐 현상</b>이 발생했고, 적용을 취소했다.
+
+<br />
+<hr />
+
+## 제공되는 subset 폰트 파일 사용하기
+
+내가 적용하고자 했던 폰트는 바로 많이 사용되고 있는 <b>프리텐다드(Pretendard) 폰트</b>였는데, 총 4개의 폰트 중 3개(Bold, Light, Regular)를 차지할 만큼 성능 개선이 가장 중요한 폰트 파일이었다.
+
+<br />
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/3ac75c28-8c34-4fc9-ad88-9dcfbc40def2/image.png)
+
+</center>
+
+기존 프로젝트를 리팩터링한 관계로 자연스럽게 폰트 파일도 따로 다운로드하지 않고 사용하게 되었는데, 알고보니 <b>Pretendard 폰트를 다운로드 할 경우 subset 폰트 파일을 이미 제공</b>하고 있었다.
+
+<br />
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/1006dd5c-b30b-4c74-805e-dfe5d8b7eeb3/image.png)
+
+</center>
+
+여러 시도를 하던 중 운 좋게 woff2 subset 폴더를 발견할 수 있었고 글자 깨짐 없이 Pretendard 폰트 파일 경량화를 이룰 수 있었다.
+
+<br />
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/67bb244a-9326-492b-920c-e019849c6b25/image.png)
+
+</center>
+
+남은 하나의 폰트인 <b>런드리컴퍼니 폰트</b>같은 경우 기존에 woff 형식으로 사용하고 있던 폰트 파일은 서브셋 파일이 따로 제공되지 않는 관계로 <b>woff2 형식으로 변경</b>해 주었다.
+
+<b>런드리컴퍼니 폰트</b>는 서브셋 파일을 사용할 수 없어 아쉽지만, <b>200 KB</b>라는 나름 내 기준에서
+허용되는 크기를 가지고 있었기 때문에 사용해도 괜찮을 것 같다고 판단했다.
+
+<br />
+<hr />
+
+## 성과
+
+기존 폰트 파일의 크기를 합치면 <b>약 2.5M</b>라는 무시할 수 없는 큰 크기를 가지게 된다. 서브셋 파일을 사용하게 될 경우 <b>약 1M</b> 정도의 크기를 가지게 되고 결과적으로 <b>약 1.5M 정도를 경량화</b>했다고 볼 수 있다.
+
+<center>
+
+### 작업 후 lighthouse 성능 점수
+
+![](https://velog.velcdn.com/images/mintmin0320/post/a9f4a223-931e-4007-babc-fb09dfd53b75/image.png)
+
+</center>
+
+이제 React Query 로직과 라이브러리를 서버 컴포넌트로 리팩터링하고, 폰트 경량화를 진행한 결과를 lighthouse에서 지표를 확인해 보면 <b>LCP는 약 1.5초를, SI 같은 경우 0.5초를 최적화</b>했다.
+
+위 사진 하단(트리맵 보기 아래)을 보면, 렌더링 되는 화면을 볼 수 있는데, 사진의 크기가 작긴 하지만 성능 최적화 전과 후의 사진을 비교해 보면 더 시각적으로 최적화 작업 진행 결과를 체감할 수 있다.
+
+<hr />
+
+<center>
+
+#### 최적화 전
+
+![](https://velog.velcdn.com/images/mintmin0320/post/b5afb22c-74b9-4b42-8885-e481591e85eb/image.png)
+
+</center>
+
+- 본 페이지 데이터 페칭 지연으로 인해 구역에서 <b>약 3칸을 fallback Loading UI(작게 보이는 기차 이미지)가 차지하는 되는 모습</b>을 살펴볼 수 있다.
+
+<center>
+
+<br />
+
+#### 최적화 후
+
+![](https://velog.velcdn.com/images/mintmin0320/post/ad7f75cd-3a3a-46df-8a24-67276260ff76/image.png)
+
+</center>
+
+- 서버 렌더링의 이점 + 폰트 경량화로 Loading UI가 3칸을 차지하던 전에 비해 <b>빠르게 화면이 렌더링 되는 것(Speed Index)</b>을 볼 수 있다.
+
+<br />
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/80f77e32-f38e-478f-aa8e-1b6279693af8/image.png)
+
+</center>
+
+이로써 4개의 항목에서 모두 상위권 점수를 달성할 수 있게 되었다.
+
+<br />
+<hr />
+
+<center>
+
+# 마치며
+
+![](https://velog.velcdn.com/images/mintmin0320/post/3b06bcd6-8022-4f25-bfed-4e10e79301dc/image.png)
+
+[이미지 출처](https://wordrow.kr/%ED%95%9C%EC%9E%90/%E9%B7%84%E8%82%8B-%EA%B3%84%EB%A5%B5/)
+
+</center>
+
+<br />
+
+현재 프로젝트 한정으로 React Query가 나에게는 계륵처럼 느껴졌다. 무언가 필요하지 않은 것 같은데 막상 도움이 될 것 같다는 생각이 머릿속에서 대립됐기 때문인 것 같다.
+
+하지만, 이번에 리팩터링을 진행하며 현재 프로젝트에는 필요하지 않다는 결론을 내리게 됐다. 백문이 불여일견이라. 직접 부딪혀보니 전보다 더 빠른 화면 렌더링을 눈으로 확인할 수 있었고 lighthouse라는 지표도 이를 뒷받침하고 있다고 생각한다.
+
+Next와 React Query를 공존해서 사용하는 것에 대한 고민은 예전에도 경험했었고, 여전히 많은 의견이 있는 것으로 알고 있다.
+
+주관적인 나의 생각은 <b>Next의 캐싱 기능이 존재하지만, 여전히 React Query에서 제공하는 매력적인 기능들을 완전히 대체하기에는 직접 사용해 보며 부족하다고 생각했고, Next를 사용할 때 거의 React Query를 사용하는 편</b>이다.
+
+이번 계기를 <b>요구사항에 적합한 기술 선정이 이루어져야 한다는 부분</b>에서 아쉬움이 있었던 것 같다. 하지만 이번 경험을 통해 데이터를 쌓았고, 향후에 같은 상황에 놓인다면 더 나은 선택을 할 수 있을 거라 생각한다.
+
+<br />
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/67d594de-df93-4c9b-b461-24784f579766/image.png)
+
+</center>
+
+이와 관련해서 성능 최적화 견문을 넓힐 수 있었다. 비록 코드 개선을 통해 폰트 파일 최적화를 이루어낸 것은 아니지만, 만약 서브셋에 대한 개념을 몰랐다면,
+
+폰트를 다운로드했을 때 자연스럽게 서브셋 woff2 폴더가 아닌 woff2 폴더를 선택했을 것이다. 그동안에는 woff2 형식과 <b>next/font/local</b>을 너무 신뢰해 불필요한 곳에서 성능 누수가 많이 발생한 것 같다.
+
+이외에도 gif 형식을 mp4, webm 형식으로 변경하는 시도를 해봤는데, 투명한 gif 배경을 변환하는 과정에서 브라우저별(크롬, 사파리) 이슈가 발생해 추가적인 작업이 필요할 것 같다.
+
+여러 최적화를 진행해 보며, 다양한 최적화 방법이 존재하고 필요하다는 것을 느꼈고, 진행 과정에서 최근 면접에서도 많은 질문을 받았던 크로스브라우징에 대해 다시금 생각해 보고 신경 쓸 수 있는 좋은 계기가 되었다.
+
+<br />
+<br />
+<hr />
+
+## Reference
+
+- [Server Components](https://nextjs.org/docs/app/building-your-application/rendering/server-components)
