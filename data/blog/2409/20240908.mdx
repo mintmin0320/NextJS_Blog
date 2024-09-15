@@ -61,10 +61,15 @@ import Loading from '@/shared/@common/ui/Loading'
 import LocationInputGroup from '@/shared/@common/ui/LocationInputGroup'
 import TransitList from './TransitList'
 
-import TransitRoutes from '../hooks/TransitRoutes'
+import { useGetTransitList } from '@/shared/provincial/api/queries/useGetTransitList'
 
 const TransitRouteSection = () => {
-  const { transitList, locationState, isLoading } = TransitRoutes()
+  const { transitList, isLoading } = useGetTransitList()
+
+  const locationState = {
+    origin: transitList?.origin ?? '',
+    destination: transitList?.destination ?? '',
+  }
 
   if (isLoading) return <Loading />
 
@@ -77,34 +82,6 @@ const TransitRouteSection = () => {
 }
 
 export default TransitRouteSection
-```
-
-<center>
-
-### useTransitRoutes.ts
-
-</center>
-
-```
-import {
-   useGetTransitList
-} from '@/shared/provincial/api/queries/useGetTransitList'
-
-const useTransitRoutes = () => {
-  const { transitList, isLoading } = useGetTransitList()
-
-  const locationState = {
-    origin: transitList?.origin ?? '',
-    destination: transitList?.destination ?? '',
-  }
-
-  return {
-    transitList,
-    locationState,
-    isLoading,
-  }
-}
-export default useTransitRoutes
 ```
 
 <center>
@@ -294,6 +271,11 @@ lighthouse와 WebPageTest 사이트를 이용해 원인을 분석한 결과 빠�
 
 <b>런드리컴퍼니 폰트</b>는 서브셋 파일을 사용할 수 없어 아쉽지만, <b>200 KB</b>라는 나름 내 기준에서
 허용되는 크기를 가지고 있었기 때문에 사용해도 괜찮을 것 같다고 판단했다.
+
+<br />
+
+> - 서브셋 파일이 없다면, 최대한 woff2 형식으로 폰트 파일 크기를 경량화해서 사용하자
+> - 서브셋 파일에 입력받은 텍스트가 없을 수도 있다는 부분도 조금은 염두해 둘 필요가 있다.
 
 <br />
 <hr />
