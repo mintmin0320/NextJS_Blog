@@ -1,0 +1,270 @@
+---
+title: 'Fiber와 Suspense 비동기 처리 톺아보기'
+date: '2024-10-04'
+tags: ['React']
+draft: false
+summary: 'react GitHub에서 Fiber와 Suspense 비동기 처리 코드 분석해 보기'
+images: ['/static/images/thumbnail/20241004.webp']
+---
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/f8aa2a54-562f-4fab-8cdb-16b8994e0459/image.png)
+
+</center>
+
+React 혹은 Next를 사용해서 개발을 진행하다 보면, 심심치 않게 <b>Suspense 컴포넌트</b>를 자주 사용하게 된다. 나 또한 <b>Suspense</b>와 관련된 주제를 두 차례 포스팅했던 경험이 있을 정도로 제법 낯익다.
+
+<hr />
+
+### Suspense 관련 지난 포스팅
+
+- [Suspense를 사용해 네트워크 폭포 현상을 병렬처리로 개선하기](https://www.mintmin.dev/blog/2406/20240610)
+- [useSuspenseInfiniteQuery + Suspense을 적용하며 겪은 무한 루프 트러블 슈팅](https://www.mintmin.dev/blog/2402/20240202)
+
+<hr />
+
+## Suspense 구현 코드를 살펴보게 된 계기?
+
+개인적으로 <b>Suspense</b>와 비슷한 역할을 수행한다고 생각하는 세트 메뉴 <b>Error Boundary 컴포넌트</b>를 구현하고 사용하며 의문이 하나 생겼다.
+
+<b>Error Boundary</b>는 <b>Suspense</b>와 달리 특이하게 React에서 별도의 내장 컴포넌트로 제공하지 않기
+때문에 직접 구현이 필요하다.
+
+그리고 <b>Error Boundary</b>를 직접 구현하기 위해서는 함수형 컴포넌트의 hook을 사용하는 것이 아닌 <b>Class 컴포넌트</b> 형태로 구현이 필요하다.
+
+<hr />
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/f1653d7c-99f9-4e80-8291-961664d7b305/image.png)
+
+</center>
+
+<hr />
+
+이는 자식 컴포넌트에서 발생하는 에러를 감지하고, 처리하는 `getDerivedStateFromError`, `componentDidCatch` 두 메서드가 아직 Hook으로 구현되지 않았기 때문인데,
+
+<b>Suspense</b>는 직접 구현해 본 경험이 없었기 때문에 어떻게 자식 컴포넌트에서의 `Promise`를
+감지하고 처리하는지에 대한 궁금증이 생겼다.
+
+관련 자료를 찾아본 결과, <b>Suspense는 React 내부에서 다양한 모듈과 함수로 구현</b>되어 있다는 것을 알 수 있었는데, 내가 궁금했던 `Promise`와 관련된 내용은 이미 잘 정리된 글이 있었다.
+
+<hr />
+
+### Suspense의 Promise Catch 관련 포스팅
+
+- [Suspense 톺아보기 🔎](https://velog.io/@woogur29/Suspense-%ED%86%BA%EC%95%84%EB%B3%B4%EA%B8%B0)
+
+- [React 18 - Suspense 분석하기](https://blue-tang.tistory.com/98)
+
+<hr />
+
+초기 궁금증인 어느 정도 해결되었고 문득, Suspense 컴포넌트가 <b>어떻게 동작하고, 처리되는지에 대해 궁금증</b>이 생겼다.
+
+<b>React GitHub</b>에서 많은 파일 중
+[ReactFiberSuspenseComponent.js](https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberSuspenseComponent.js)를
+통해 Suspense 동작에 대한 코드를 살펴볼 수 있었다. 주석을 포함해도 생각보다 코드가 그렇게 많지는
+않다. <b>Fiber</b>에 관한 내용이 밀접하게 포함되어 있었다.
+
+<hr />
+
+<center>
+
+### ReactFiberSuspenseComponent.js
+
+![](https://velog.velcdn.com/images/mintmin0320/post/fe0630a4-d746-4c28-966d-10778009bbea/image.png)
+
+</center>
+
+<hr />
+
+실험적인 코드, 정의 후 현 파일에서는 사용되지 않는 코드가 생각보다 적지 않게 존재하기 때문에, 주요 코드 위주로 살펴보게 되었다.
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/449287f2-2a78-4be1-8ea6-cb8975a7f7a6/image.png)
+
+</center>
+
+1번 라인에서 확인할 수 있듯, <b>findFirstSuspended 함수</b>는 <b>Fiber 타입의 row를 매개 변수</b>로 받는 것을 볼 수 있는데,
+
+Fiber 사용 이유는 내부적으로 사용하는 알고리즘 구조를 사용해 Fiber 트리 구조를 검색하고, 업데이트나 렌더링 시 효율적으로 작업을 수행하기 위함인 것 같다.
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/d77ee420-5828-4b2e-96e8-342d7348ab42/image.png)
+
+</center>
+
+React는 컴포넌트를 Fiber 구조로 변환해서 관리하고, 이 Fiber들이 모여 Fiber 트리라는 구조를 이루는데, 여기서 <b>row(node)는 그 탐색을 시작할 노드</b>를 의미하며,
+
+<b>row부터 시작해서 반복적(while)</b>으로 해당 노드의 자식 또는 형제 노드로 탐색을 진행하며, <b>비동기 작업(Suspense 활성화 상태) 중인 컴포넌트를 찾아낸다.</b>
+
+즉, <b>findFirstSuspended 함수는 트리 구조를 순회하며, 비동기 작업이 진행 중인 컴포넌트를 찾고, 반환하는 역할</b>을 수행한다고 이해하면 될 것 같다.
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/702ea1d0-6b57-43b3-b1fe-f81a88cccec3/image.png)
+
+</center>
+
+이 단계가 잘 이해가 되지 않았는데, 다른 아티클이 없어서 GPT를 사용해 내용을 이해하고 방향을 잡을 수 있었다.
+
+`tag` 속성을 이용해 노드가 <b>SuspenseComponent(Suspense 컴포넌트)</b>를 의미하는지 확인하고, `true`일 경우 조건문 내부의 다음 로직을 수행하게 된다.
+
+```tsx
+<Suspense fallback={<Loading />}>
+  <AsyncComponent />
+</Suspense>
+```
+
+<b>SuspenseComponent</b>는 위 코드에서 <b>Suspense 컴포넌트</b>를 의미한다고 이해하면 될 것 같다.
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/3437c376-4579-48b3-a574-60bb9773d320/image.png)
+
+</center>
+
+그리고 React의 Fiber 구조에서 특정 컴포넌트의 상태, 효과(Hook에서 관리하는 값) 또는 렌더링 된 결과 등을 저장하는 속성인 `node.memoizedState`을 `state` 변수에 대입하게 되는데,
+
+이때, `state` 값이 `null`이라면 비동기 작업이 진행되지 않는 상태이고, `memoizedState` 값이 `null`이라는 것을 의미한다. 그리고 Suspense가 동작할 필요가 없기 때문에 조건문을 통과할 수 없게 된다.
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/10ef3401-9e11-4074-95a4-b6b206eff30a/image.png)
+
+</center>
+
+다음 코드를 살펴보면, `dehydrated` 속성이 있는데 이름에서 유추할 수 있듯이 <b>SSR</b>과 관련이 있는 속성이다. 따라서 <b>CSR</b>에서는 당연히 `null`이기 때문에 조건을 통과하게 되고, <b>해당 node가 return</b> 된다.
+
+<hr />
+
+## 조건 설명
+
+### - dehydrated가 존재할 때 (서버에서 이미 비동기 작업이 끝난 상태)
+
+서버에서 미리 렌더링 된 상태이므로, 클라이언트에서 Suspense를 작동시키지 않고, 이미 존재하는 HTML을 재사용(즉, hydration) 한다.
+
+### - dehydrated === null 일 때
+
+서버에서 미리 렌더링 된 상태가 아니거나, 클라이언트 측에서 새로운 비동기 작업을 기다리고 있는 상황이므로, 이때 Suspense가 동작하게 된다.
+
+### - isSuspenseInstancePending(dehydrated) <br/>
+
+비동기 작업이 진행 중인 상태인지 확인하는 함수
+
+### - isSuspenseInstanceFallback(dehydrated) <br/>
+
+Fallback UI(대체 UI)가 렌더링 되고 있는 상태인지 확인하는 함수
+
+<br />
+
+이 단계에서 한 조건이라도 해당된다면(비동기 작업이 활성화된 상태), <b>node(비동기 작업이 대기 중 또는 fallback UI가 렌더링 되고 있다면 그 노드)를 return</b> 하게 된다.
+
+<hr />
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/5a1d288b-373f-4e05-bdd3-ab69d49417e5/image.png)
+
+</center>
+
+<b>SuspenseListComponent (SuspenseList)</b> 같은 경우 현재 실험적으로 제공되는 기능인 관계로 해당 포스팅에서는
+제외한다.
+
+<hr />
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/2254e7e2-8c1b-4204-bc0c-1b17787c3255/image.png)
+
+</center>
+
+### - node.child !== null
+
+현재 노드가 자식 노드를 가지고 있는지를 확인하고 자식 노드가 없으면 이 조건문은 실행되지 않고 다음 조건으로
+
+### - node.child.return = node;
+
+자식 노드의 return 속성에 현재 노드를 저장 -> 여기서 `return` 속성은 부모 노드를 참조하는 역할로, 자식 노드가 자신의 부모 노드 기억
+
+### - node = node.child;
+
+현재 탐색 중인 노드를 자식 노드로 변경 -> 트리에서 자식 노드로 이동
+
+### - continue;
+
+현재 반복을 종료하고, 다시 루프의 처음으로 돌아가서 자식 노드를 탐색하는 과정을 계속 진행
+
+<hr />
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/7b77faac-86ae-4a97-aff1-c2d06e9eaa36/image.png)
+
+</center>
+
+### - 현재 노드가 row와 동일할 때
+
+row는 처음 함수가 호출될 때 전달된 노드(탐색의 시작점)이다. 즉, 더 이상 탐색할 노드가 없기 때문에 종료하고 `null`을 반환한다.
+
+<hr />
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/cdbad7b5-23f4-49e1-be34-bcc276b920ae/image.png)
+
+</center>
+
+`sibling` 속성에서 눈치챌 수 있듯이 형제 노드와 관련이 있다. 형제 노드가 없을 경우에는 부모 노드로
+올라가야 한다. 하지만, 만약 부모 노드가 없거나 처음 <b>탐색을 시작한 노드(row)</b>와 같다면 탐색을
+종료한다.
+
+이외에는 경우에는 부모 노드로 이동하며 트리 상위로 계속 이동하면서 형제 노드를 찾는다. 형제 노드를 찾으면 형제 노드에 부모 노드를 연결하고, 탐색을 형제 노드로 이동해 계속해서 진행하게 된다.
+
+<hr />
+
+## 정리
+
+### - findFirstSuspended 함수
+
+Fiber 트리를 순회하며 비동기 작업으로 인해 대기 중인 첫 번째 Suspense 컴포넌트를 찾아 반환하면, 이를 통해 React는 어떤 컴포넌트가 로딩 중인지 판단하고 fallback UI를 표시한다.
+
+### - Fiber 트리
+
+React는 컴포넌트를 Fiber 구조로 관리하며, 각 컴포넌트의 상태와 업데이트 정보를 효율적으로 처리하고, Suspense 컴포넌트는 이 Fiber 트리를 통해 자신의 비동기 상태를 추적하고 관리한다.
+
+<hr />
+
+## 마치며
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/e5cb8137-3314-48ff-b85d-3fe377420445/image.png)
+
+</center>
+
+처음 Fiber에 대한 내용을 학습할 때 사실 크게 와닿지가 않았던 기억이 있다. 단지 내부적인 동작 원리라는 인식 정도만 하고 넘어갔는데, 이번에 포스팅을 작성하며 당시에 학습하며 봤던 `tag`, `return`, `sibling` 등의 낯익은 속성들이 코드를 이해하는데 큰 도움이 되었다.
+
+Error Boundary를 직접 구현하면서 많은 것을 배울 수 있었는데, 이번 포스팅을 통해서는 또 다른 방향으로 견문을 넓힐 수 있었다. React 내부에서 동작을 실전으로 확인하고, Fiber에 대한 조금의 선행 지식이 주요 계기가 되었던 것 같다.
+
+하나둘씩 지식이 쌓이며 성장하는 부분도 좋지만, 과거의 지식 퍼즐과 맞춰지면서 성장해 나아가는 과정도 큰 즐거움이 되는 것 같다. 앞으로도 배우고 알아가며, 오늘의 경험이 또 다른 퍼즐의 연결 고리가 될 것이다. 더 많은 연결 고리를 만드는 것이 앞으로의 숙명일 것 같다.
+
+다만, 이번 포스팅에서 마음이 걸리는 부분은 정확한 레퍼런스 없이 GPT의 힘을 빌린 부분이다. 이에 대해서는 정확성을 높이기 위해 다른 비슷한 아티클과 코드 주석을 참고해 간극을 메우기 위해 노력했다. 다행히도 코드 자체에 큰 이견이 발생할 만한 부분은 없는 것 같다.
+
+<br />
+
+> 혹여나 잘못된 부분이 있다면 댓글 혹은 메일 부탁드립니다. 🙇🏻‍♂️
+
+<br />
+<hr />
+
+## 참고
+
+- [React 공식 문서](https://ko.react.dev/reference/react/Suspense)
+
+- [React GitHub](https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberSuspenseComponent.js)
+
+- [[번역] React에서 SuspenseList는 어떻게 동작하나요?](https://ted-projects.com/react-internals-deep-dive-25)
