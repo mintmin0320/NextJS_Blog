@@ -127,7 +127,7 @@ React는 컴포넌트를 Fiber 구조로 변환해서 관리하고, 이 Fiber들
 
 </center>
 
-그리고 React의 Fiber 구조에서 특정 컴포넌트의 상태, 효과(Hook에서 관리하는 값) 또는 렌더링 된 결과 등을 저장하는 속성인 `node.memoizedState`을 `state` 변수에 대입하게 되는데,
+그리고 React의 Fiber 구조에서 특정 컴포넌트의 상태, 효과(Hook에서 관리하는 값) 또는 렌더링 된 결과 등을 저장하는 속성인 `memoizedState`을 `state` 변수에 대입하게 되는데,
 
 이때, `state` 값이 `null`이라면 비동기 작업이 진행되지 않는 상태이고, `memoizedState` 값이 `null`이라는 것을 의미한다. 그리고 Suspense가 동작할 필요가 없기 때문에 조건문을 통과할 수 없게 된다.
 
