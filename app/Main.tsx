@@ -1,13 +1,10 @@
+import Image from '@/components/Image'
 import Link from '@/components/Link'
-import Tag from '@/components/Tag'
+import ScrollTopAndComment from '@/components/ScrollTopAndComment'
 import siteMetadata from '@/data/siteMetadata'
 import { formatDate } from 'pliny/utils/formatDate'
-import NewsletterForm from 'pliny/ui/NewsletterForm'
-import ScrollTopAndComment from '@/components/ScrollTopAndComment'
-import Image from '@/components/Image'
 
 import 'css/tailwind.css'
-import Skill from '@/components/Skill'
 
 // 메인 페이지 표시할 post 갯수 지정
 const MAX_DISPLAY = 12
@@ -44,54 +41,56 @@ export default function Home({ posts }) {
             const isEven = index % 2 === 0
             const { slug, title, tags, images, date } = post
 
-            return (
-              <Link
-                key={slug}
-                href={`/blog/${slug}`}
-                className={`rounded-[16px] w-[280px] transition-transform duration-300 hover:scale-105 mo:w-full ${
-                  isEven ? 'h-[258px]' : 'h-[215px]'
-                }`}
-              >
-                <li className="rounded-[16px] dark:bg-[#424242] h-full w-full mb-10">
-                  <Image
-                    src={images?.[0] ?? '/path/to/default/image.jpg'}
-                    alt="thumbnail"
-                    width={280}
-                    height={isEven ? 258 : 215}
-                    className={`rounded-[16px] border mo:w-full
+            if (!tags.includes('왓에버 멘토링')) {
+              return (
+                <Link
+                  key={slug}
+                  href={`/blog/${slug}`}
+                  className={`rounded-[16px] w-[280px] transition-transform duration-300 hover:scale-105 mo:w-full ${
+                    isEven ? 'h-[258px]' : 'h-[215px]'
+                  }`}
+                >
+                  <li className="rounded-[16px] dark:bg-[#424242] h-full w-full mb-10">
+                    <Image
+                      src={images?.[0] ?? '/path/to/default/image.jpg'}
+                      alt="thumbnail"
+                      width={280}
+                      height={isEven ? 258 : 215}
+                      className={`rounded-[16px] border mo:w-full
                     ${isEven ? 'h-[258px]' : 'h-[215px]'}`}
-                  />
+                    />
 
-                  <article>
-                    <time
-                      className="font-[400] pt-2 text-[13px] flex justify-center"
-                      dateTime={date}
-                    >
-                      <p className="border border-x-0 border-t-0 border-b-[#000] dark:border-0 dark:border-b dark:border-b-[#fff] ">
-                        {formatDate(date, siteMetadata.locale)}
-                      </p>
-                    </time>
-                    <div className="space-y-2 xl:grid xl:grid-cols-3 xl:items-baseline xl:space-y-0 px-3 pt-2 pb-1">
-                      <div className="space-y-5 xl:col-span-3">
-                        <div className="space-y-6">
-                          <div>
-                            <h2 className="font-bold leading-8 tracking-tight w-full hover:text-primary-500">
-                              {title}
-                            </h2>
+                    <article>
+                      <time
+                        className="font-[400] pt-2 text-[13px] flex justify-center"
+                        dateTime={date}
+                      >
+                        <p className="border border-x-0 border-t-0 border-b-[#000] dark:border-0 dark:border-b dark:border-b-[#fff] ">
+                          {formatDate(date, siteMetadata.locale)}
+                        </p>
+                      </time>
+                      <div className="space-y-2 xl:grid xl:grid-cols-3 xl:items-baseline xl:space-y-0 px-3 pt-2 pb-1">
+                        <div className="space-y-5 xl:col-span-3">
+                          <div className="space-y-6">
+                            <div>
+                              <h2 className="font-bold leading-8 tracking-tight w-full hover:text-primary-500">
+                                {title}
+                              </h2>
 
-                            {/* <div className="flex flex-wrap">
+                              {/* <div className="flex flex-wrap">
                             {tags.map((tag) => (
                               <Tag key={tag} text={tag} />
                             ))}
                           </div> */}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </article>
-                </li>
-              </Link>
-            )
+                    </article>
+                  </li>
+                </Link>
+              )
+            }
           })}
         </ul>
       </div>
