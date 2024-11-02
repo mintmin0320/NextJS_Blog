@@ -4,39 +4,44 @@ date: '2023-10-02'
 tags: ['블로그 커스텀']
 draft: false
 summary: 'Next13 환경의 블로그 배경을 동영상으로 변경하는 실습을 해보자.'
+images: ['/static/images/time-machine.jpg']
 ---
 
 > - video 태그 다뤄보기
 > - 테일윈드 CSS 사용 연습하기
 > - next.js에서 동영상 사용하는 방법 공부하기
 
-<br/><br/>
+<br />
+<br />
 
 # 배경부터 바꿔보자
+
 낮에 컨퍼런스 관련 웹페이지를 둘러보다가 우주를 배경으로 하는 신비로운 UI를 봤던 되었던 기억을 토대로 배경에 mp4 파일을 재생하는 만들기로 결정했다. 예전부터 한번 만들어보고 싶다는 생각을 가지고 있던 터라 머릿속으로 구도를 쉽게 그릴 수 있었고 곧바로 저작권 없고 무료인 내 휴대폰 갤러리를 찾아봤다. 몇 없는 영상 중에 작년에 눈 오는 날 촬영했던 7초가량의 짧은 동영상을 발견했고 그 순간 차가운 취업시장 + 곧 겨울이라는 콘셉트로 만들면 재밌을 것 같다는 생각이 번뜩 떠올랐다.
 
-<br/>
+<br />
 
 ## 그래서 어떻게 코드를 짜야 하나요??
+
 아이디어 구상은 끝났으나 막상 구현을 하려니 걱정되는 부분이 두 가지 있었다.
-1. 동영상을 배경화면이나 페이지에서 사용해 봤던 경험이 없었기 때문에 ```<video>``` 태그는 나에게 익숙하지 않은 상태다.
-2. 테일윈드 CSS 또한 미숙하기 때문에 background-image를 어떻게 적용해야 하는가? 
+
+1. 동영상을 배경화면이나 페이지에서 사용해 봤던 경험이 없었기 때문에 `<video>` 태그는 나에게 익숙하지 않은 상태다.
+2. 테일윈드 CSS 또한 미숙하기 때문에 background-image를 어떻게 적용해야 하는가?
 3. 기존 템플릿의 복잡한 구조를 아직 완벽하게 파악하지 못했다.
 
-<br/>
+<br />
 
 일단 absolute와 relative를 이용해서 body 태그 아래에 따로 만든 Video 태그를 적용해 화면은 다 채우는데 까지는 성공했다.
 
 ![](https://velog.velcdn.com/images/mintmin0320/post/9dc84080-3cea-4907-82b3-a25e107ccd5f/image.png)
 
-이제 Video 컴포넌트에서 동영상만 나오게 하면 되는데 그냥 ```<video>```만 사용하니 아무 변화도 없었다. 바로 구글에 검색해 본 결과 동영상 재생을 위해서는 라이브러리 다운로드가 필요하다는 사실을 알게 되었다.
+이제 Video 컴포넌트에서 동영상만 나오게 하면 되는데 그냥 `<video>`만 사용하니 아무 변화도 없었다. 바로 구글에 검색해 본 결과 동영상 재생을 위해서는 라이브러리 다운로드가 필요하다는 사실을 알게 되었다.
 
 > Next.js에서 별도의 비디오 라이브러리를 다운로드해야 하는 주요 이유
-기본적으로 Next.js는 비디오 파일을 최적화하거나 로드하는 기능을 내장하고 있지 않는다. 이미지 파일의 경우, Next.js는 next/image를 통해 이미지를 최적화하고 로딩을 지원한다. 그러나 비디오 파일에 대해서는 이러한 기능이 없다.
+> 기본적으로 Next.js는 비디오 파일을 최적화하거나 로드하는 기능을 내장하고 있지 않는다. 이미지 파일의 경우, Next.js는 next/image를 통해 이미지를 최적화하고 로딩을 지원한다. 그러나 비디오 파일에 대해서는 이러한 기능이 없다.
 
-<br/>
+<br />
 
-결국 비디오 최적화로 파일의 크기를 줄이고, 로딩 시간을 최적화하기 위해서인 것 같다. npm Next Videos 라이브러리에서 제공하는 보일러 플레이트 코드대로 작성하고 next.config.js에 plugins에 코드를 입력하고 ```yarn start```를 한순간 또 아무 변화가 일어나지 않았다. 악플보다 무플이 무섭다는 말을 다시금 공감하며 온갖 방법을 동원해 봤지만 시간이 지나도 해결되지 않았다. 그러다가 우연히 발견한 아티클을 참고해 봤더니 영상이 정상적으로 배경에서 실행됐다! 기존에 플러그인에 withVideos를 넣었을 때는 안 되다가 제일 하단에 두 코드를 배치하니 실행이 된다.. 무언가 이상했다. module.exports를 두 번 사용하게 되기도 하고 왜 작동이 되는지 이유도 몰랐지만 일단 배포를 진행해 보기로 했다.
+결국 비디오 최적화로 파일의 크기를 줄이고, 로딩 시간을 최적화하기 위해서인 것 같다. npm Next Videos 라이브러리에서 제공하는 보일러 플레이트 코드대로 작성하고 next.config.js에 plugins에 코드를 입력하고 `yarn start`를 한순간 또 아무 변화가 일어나지 않았다. 악플보다 무플이 무섭다는 말을 다시금 공감하며 온갖 방법을 동원해 봤지만 시간이 지나도 해결되지 않았다. 그러다가 우연히 발견한 아티클을 참고해 봤더니 영상이 정상적으로 배경에서 실행됐다! 기존에 플러그인에 withVideos를 넣었을 때는 안 되다가 제일 하단에 두 코드를 배치하니 실행이 된다.. 무언가 이상했다. module.exports를 두 번 사용하게 되기도 하고 왜 작동이 되는지 이유도 몰랐지만 일단 배포를 진행해 보기로 했다.
 
 ```
 const withVideos = require('next-videos')
@@ -44,6 +49,7 @@ module.exports = withVideos()
 ```
 
 ## 슬픈 예감은 틀린 적이 없다
+
 떨리는 마음을 안고 vercel에서 Deployments가 진행되던 중 에러가 발생했다.
 
 ![](https://velog.velcdn.com/images/mintmin0320/post/ea260bd5-c204-482b-a447-d24402b68a4c/image.png)
@@ -52,20 +58,20 @@ module.exports = withVideos()
 
 > Module not found: Package path ./generated is not exported from package /vercel/path0/node_modules/contentlayer (see exports field in /vercel/path0/node_modules/contentlayer/package.json)
 
-<br/>
+<br />
 
-해당 컴포넌트에서 ./generated 관련 import를 찾아봐도 로컬에서는 오류가 없었다. 애초에 이 컴포넌트는 건드리지 않았기 때문에 더더욱 혼란스러웠다. contentlayer/generated에 대한 정보도 부족해 검색해 본 결과 정적 콘텐츠 관리 도구로 마크다운 파일을 읽어 데이터 객체로 변환하고 동적으로 렌더링 하여 페이지에 통합하는 역할을 한다고 한다. 한마디로 마크다운으로 작성한 파일을 각 페이지에서 사용할 수 있도록 관리해 주는 역할을 하는 것 같다. 
+해당 컴포넌트에서 ./generated 관련 import를 찾아봐도 로컬에서는 오류가 없었다. 애초에 이 컴포넌트는 건드리지 않았기 때문에 더더욱 혼란스러웠다. contentlayer/generated에 대한 정보도 부족해 검색해 본 결과 정적 콘텐츠 관리 도구로 마크다운 파일을 읽어 데이터 객체로 변환하고 동적으로 렌더링 하여 페이지에 통합하는 역할을 한다고 한다. 한마디로 마크다운으로 작성한 파일을 각 페이지에서 사용할 수 있도록 관리해 주는 역할을 하는 것 같다.
 
 여기서 정말 많은 시간이 소모됐다. 관련 아티클도 없었고 stackoverflow에서도 파이어베이스 관련 내용밖에 게시글이 없었다. 에러 관련 글이 적거나 없다는 것은 내가 실수를 했다는 뜻이지만 도저히 감이 잡히지 않았다.
 
-<br/>
+<br />
 
 ## 에러 해결의 순간은 우연에서부터 시작된다.
 
 ![](https://velog.velcdn.com/images/mintmin0320/post/fd3ecfb4-d843-4db5-a1a1-57966849bde9/image.png)
 
 우연히 개발자 도구에 콘솔을 보다가 동영상 관련 에러가 계속 발생하고 있다는 사실을 알게 되었다.
-에러를 찾아보니 Content Security Policy 설정에서 media-src 가 오직 *.s3.amazonaws.com 도메인에서만 미디어 로드를 허용하기 때문에 로컬 파일을 로드하기 위해선 이 설정 수정이 필요했다.
+에러를 찾아보니 Content Security Policy 설정에서 media-src 가 오직 \*.s3.amazonaws.com 도메인에서만 미디어 로드를 허용하기 때문에 로컬 파일을 로드하기 위해선 이 설정 수정이 필요했다.
 next.config.js 파일의 ContentSecurityPolicy 설정에서 media-src 부분을 수정하여 localhost도 허용하도록 추가해 주면 된다.
 
 ```
@@ -78,24 +84,29 @@ const ContentSecurityPolicy = `
 
 조마조마한 마음으로 다시 배포를 진행하니 정상적으로 배포가 되었다! 나중에 테스트 해본 결과 withVideos는 영향을 주지는 않았던 것 같다. 드디어 처음 구상한 느낌대로 블로그를 커스텀 했지만 시간은 어느덧 새벽 4시.. 토요일에 있을 기사 시험을 공부해야 하기 때문에 조금이라도 공부하기 위해 간단한 CSS만 수정하고 다음을 기약하며 블로그 커스텀을 마무리했다.
 
-<br/><br/>
+<br />
+<br />
 
 # 결과 화면
 
 ![](https://velog.velcdn.com/images/mintmin0320/post/5c72c8b4-8996-4a65-b817-1db03692104c/image.png)
 
-<br/><br/>
+<br />
+<br />
 
 # 후기
+
 이제 내 블로그에서 곧 다가올 계절처럼 눈이 내린다~! 예전에 next.js를 공부할 겸 토이 프로젝트로 두 번 사용해 본 경험이 있는데 이번 블로그 커스텀을 진행하며 새로운 버전인 next13과 템플릿이라는 어려움도 존재하긴 하지만 내가 아직 next.js를 제대로 이해하고 사용하지 못하고 있다고 생각한다. 앞으로도 원활한 블로그 커스텀을 진행을 위해 더 공부하고 정리하며 나만의 개성 있는 블로그를 만들기 위해 발전하자!
 
 ![](https://velog.velcdn.com/images/mintmin0320/post/4c8e3cea-7206-4daa-9451-eab0491df5ee/image.png)
 
 배포 실패의 흔적
 
-<br/><br/>
+<br />
+<br />
 
 # 참고
+
 [Next Videos](https://www.npmjs.com/package/next-videos?activeTab=readme)
 
 [블로그 GitHub](https://github.com/mintmin0320/NextJS_Blog)

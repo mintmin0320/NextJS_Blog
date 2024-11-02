@@ -1,19 +1,21 @@
 ---
 title: 'Nest에서 FormData를 이용해 전송받은 이미지와 데이터 처리하기'
 date: '2023-06-08'
-tags: ['Nest']
+tags: ['Nest.js']
 draft: false
 summary: 'Nest 프레임워크에서 클라이언트에서 받은 이미지와 데이터 처리하기'
+images: ['/static/images/thumbnail/nest.webp']
 ---
 
 공유 오피스를 등록하고 예약하는 프로젝트에서 회의실 등록을 위한 API를 구현하던 중 이미지와 데이터를 같이 전송하는 방법과 Nest 프레임워크에서 이 요청을 처리하는 방법에 대해 고민이 많았다. 구글에 어떤 키워드로 검색해야 할지 몰라 헤매다가 트레이닝 강사님께 조언을 얻어 보고 시도해 본 결과를 공유해 보려고 한다.
 (이미지는 S3에 저장되고 경로만 DB에 저장)
 
 ### 준비물
->- Nest.js - MVC와 Repository 패턴을 준수한 디렉토리(...)
->- Postman
->- VS Code
->- S3 (S3에 이미지를 저장하고 DB에는 이미지 경로만 저장)
+
+> - Nest.js - MVC와 Repository 패턴을 준수한 디렉토리(...)
+> - Postman
+> - VS Code
+> - S3 (S3에 이미지를 저장하고 DB에는 이미지 경로만 저장)
 
 ![](https://velog.velcdn.com/images/mintmin0320/post/3b3b35f5-a344-463a-8275-d29cb9be2f0c/image.png)
 
@@ -24,12 +26,12 @@ summary: 'Nest 프레임워크에서 클라이언트에서 받은 이미지와 �
 ```
 npm i -D @types/multer
 ```
+
 - Express에서 파일 업로드 관련 모듈을 제공해주는 패키지
 - 요청과 핸들러 사이에서 파일을 처리하는 미들웨어
 - 기본적으로 Nest에 내장되어 있어 타입스크립트 명시
 
-<br/>
-
+<br />
 
 ## Controller
 
@@ -61,15 +63,16 @@ export class ReservationController {
 @UseInterceptors(FileInterceptor('image'))
 ```
 
- FileInterceptor('file')
-- 컨트롤러에 인터셉터 적용을 위해 @UseInterceptors 데코레이션을 사용 
+FileInterceptor('file')
+
+- 컨트롤러에 인터셉터 적용을 위해 @UseInterceptors 데코레이션을 사용
 - 하나의 파일을 받을때 사용하는 인터셉터
 - 첫 번째 file 변수의 파일 정보를 받아 온다.
 - ('file')의 경우 프론트에서 전송할 떄 FormData에서 설정한 name과 동일해야 함
-( 프론트에서 'image'로 보낼 경우 'image'로 무조건 적어줘야 함 )
+  ( 프론트에서 'image'로 보낼 경우 'image'로 무조건 적어줘야 함 )
 - 여러 개의 이미지를 받으려면 FilesInterceptor를 사용
 
-<br/>
+<br />
 
 ```
   async create(@UploadedFile() file: Express.Multer.File, @Body() reservationDto: CreateReservationDto) {
@@ -85,14 +88,18 @@ export class ReservationController {
 ```
 this.reservationService.create('reservation', file, reservationDto);
 ```
+
 서비스에 create함수로 넘기는 인자
+
 - 'reservation'
-이미지를 AWS S3에 저장하고 있기 때문에 저장되는 이미지를 담는 버킷 폴더명을 지정하는 역할을 수행
+  이미지를 AWS S3에 저장하고 있기 때문에 저장되는 이미지를 담는 버킷 폴더명을 지정하는 역할을 수행
 
 file
+
 - 클라이언트에서 전달받을 이미지 정보가 담긴 파일
 
-reservationDto 
+reservationDto
+
 - 회의실 전화번호, 지역, 가격 등의 정보
 
 ## Service
@@ -159,12 +166,14 @@ const result = await this.reservationRepository.create(imgUrl, reservationDto);
 ```
 
 imgUrl
+
 - 이미지가 저장된 경로
 
 reservationDto
+
 - 회의실 전화번호, 지역, 가격 등의 정보
 
-<br/>
+<br />
 
 ## Repository
 
@@ -219,7 +228,7 @@ try {
 
 분해된 객체 데이터와 imgUrl을 create 메소드를 이용해 생성해주면 된다.
 
-<br/>
+<br />
 
 ## PostMan을 이용한 테스트
 
@@ -234,25 +243,23 @@ try {
 
 ![](https://velog.velcdn.com/images/mintmin0320/post/a7994760-afa9-4174-868f-371e56dc8f2d/image.png) 이미지 경로도 정상적으로 접속돼 확인이 가능하다 ( 이상해 보이지만 정상이다.. )
 
-<br/>
+<br />
 
 ## 후기
-프로필 사진 기능 구현을 위해 이미지만 업로드는 해봤지만 데이터와 이미지를 넘기는 방법은 처음 사용해 봤기 때문에 포스팅하기에 좋은 주제라고 생각해 포스팅 하게 됐다. 구글에 어떤 키워드로 검색을 해야 할지 몰라서 그런지는 몰라도 원하는 검색 결과가 나오지는 않았기 때문에 같은 고민을 하는 분들에게 도움이 되었으면 좋겠다. 
+
+프로필 사진 기능 구현을 위해 이미지만 업로드는 해봤지만 데이터와 이미지를 넘기는 방법은 처음 사용해 봤기 때문에 포스팅하기에 좋은 주제라고 생각해 포스팅 하게 됐다. 구글에 어떤 키워드로 검색을 해야 할지 몰라서 그런지는 몰라도 원하는 검색 결과가 나오지는 않았기 때문에 같은 고민을 하는 분들에게 도움이 되었으면 좋겠다.
 (도움을 주신 존 안 강사님 감사합니다..)
 야간 수업이 끝나고.. 1시가 조금 넘었지만 오늘은 꼭 포스팅을 하겠다고 다짐했기 때문에 졸음을 참으며 글을 작성하고 있다. 포스팅을 할 때마다 느끼는 건 생각보다 뿌듯하고 보람차다 앞으로도 모르는 내용이나 기록할 만한 내용이 생긴다면 또 포스팅을 하겠다는 다짐을 하며 내일 부캠을 위해 글을 마치겠다!
-<br/>
-<br/>
 
-
+<br />
+<br />
 
 ## 🚀Error Report
 
 1. 처음 이미지 파일과 데이터를 어떻게 입력받아야 할지 고민을 많이 했다. 처음 시도한 방법은 form으로 이미지와 데이터를 모두 전달받는 방법을 시도했지만 오류가 발생했다. 결국 조언을 받고 알아낸 방법은 formdata.append로 key, value 형태로 데이터를 추가하면 간단하게 해결할 수 있었다.<br/> ( ex. formdata.append(placeName: "동양 회의실") )
-
 
 2. create() 안에 { }(중괄호)를 생략해서 오류가 발생했었다.
 
 ```
 await this.reservationModel.create( telNum, pay, placeName, decrition, areaName, detailAdress, imgUrl);
 ```
-
