@@ -189,14 +189,14 @@ Animal.prototype.speak = function() {
 const dog = new Animal('강아지');
 const cat = new Animal('고양이');
 
-dog.speak(); // "개는 소리를 낸다."
+dog.speak(); // "강아지는 소리를 낸다."
 cat.speak(); // "고양이는 소리를 낸다."
 ```
 
 우리는 당연하게 결과를 예상하지만 this가 정적으로 동작한다면,
 
 ```
-dog.speak(); // "개는 소리를 낸다."
+dog.speak(); // "강아지는 소리를 낸다."
 cat.speak(); // "고양이는 소리를 낸다."
 ```
 
