@@ -33,8 +33,10 @@ const Posts = ({ posts }) => {
           <li key={tag}>
             <button
               type="button"
-              className={`rounded p-3 text-sm font-semibold py-3 cursor-pointer hover:bg-slate-100 hover:text-black ${
-                selectedTag === tag ? 'bg-blue-500 text-white' : 'bg-gray-200'
+              className={`rounded p-3 text-sm font-semibold py-3 cursor-pointer hover:bg-lime-400 ${
+                selectedTag === tag
+                  ? 'bg-blue-500 text-white  hover:text-black'
+                  : 'bg-gray-200 dark:bg-white dark:text-black dark:hover:bg-emerald-300 dark:hover:text-white'
               }`}
               onClick={() => setSelectedTag(tag)}
             >
