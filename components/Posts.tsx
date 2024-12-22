@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react'
 import Image from './Image'
 import Link from './Link'
 
-const MAX_DISPLAY = 12
+const MAX_DISPLAY = 20
 
 const Posts = ({ posts }) => {
   const tagList = useMemo(() => {
@@ -33,7 +33,7 @@ const Posts = ({ posts }) => {
           <li key={tag}>
             <button
               type="button"
-              className={`rounded p-3 text-sm font-semibold py-3 cursor-pointer hover:bg-lime-400 ${
+              className={`rounded p-3 text-sm font-semibold py-3 cursor-pointer ${
                 selectedTag === tag
                   ? 'bg-blue-500 text-white  hover:text-black'
                   : 'bg-gray-200 dark:bg-white dark:text-black dark:hover:bg-emerald-300 dark:hover:text-white'

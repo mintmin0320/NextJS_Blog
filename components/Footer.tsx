@@ -1,6 +1,6 @@
-import Link from './Link'
-import siteMetadata from '@/data/siteMetadata'
 import SocialIcon from '@/components/social-icons'
+import siteMetadata from '@/data/siteMetadata'
+import Link from './Link'
 
 export default function Footer() {
   return (
@@ -21,11 +21,7 @@ export default function Footer() {
           <div>{` • `}</div>
           <Link href="/">{siteMetadata.title}</Link>
         </div>
-        <div className="mb-8 text-sm dark:text-white">
-          <Link href="https://github.com/timlrx/tailwind-nextjs-starter-blog">
-            시흥 최고의 개발자가 되는 그날까지
-          </Link>
-        </div>
+        <div className="mb-8 text-sm dark:text-white">시흥 최고의 개발자가 되는 그날까지</div>
       </div>
     </footer>
   )
