@@ -1,0 +1,273 @@
+---
+title: 'Next.js(v14) + React Query 과정에서 발생했던 트러블슈팅 AS'
+date: '2025-02-01'
+tags: ['트러블슈팅', 'Next.js']
+draft: false
+summary: '과거에 고민했던 트러블 슈팅 AS'
+images: ['/static/images/thumbnail/next-logo.webp']
+---
+
+### 관련 시리즈
+
+1. [useSuspenseInfiniteQuery + Suspense를 적용하며 겪은 무한 루프 트러블 슈팅](https://www.mintmin.dev/blog/2402/20240202)<br/>
+2. [Next.js(v14) - 클라이언트/서버에서 쿠키 사용하기 1'](https://www.mintmin.dev/blog/2403/20240316) <br/>
+3. [Next.js(v14) - 클라이언트/서버에서 쿠키 사용하기 完](https://www.mintmin.dev/blog/2403/20240331) <br/>
+
+<hr />
+
+## 문제 상황
+
+클라이언트 단에서 `useSuspenseQuery` 훅을 사용했을 때, SSR 과정이 발생했고, 이때 SSR 환경 내에서 데이터를 페칭할 때 쿠키에 저장한 JWT를 가져오지 못했다.
+
+Next에 내장된 `next/headers`를 사용할 경우 SSR에서 쿠키 호출이 가능했지만, 이후 클라이언트 단에서 데이터를 페칭할 때 문제가 발생했다. 반대로 여러 쿠키 라이브러리를 사용하면 클라이언트 단에서는 문제가 없었지만, 서버 단에서 사용할 수 없는 문제가 발생했다.
+
+서버/클라이언트 단에서 모두 쿠키에서 JWT를 가져올 수 있는 방법을 모색하고 있었다.
+
+## 과거 해결 방법
+
+[Next.js Client Cookies](https://github.com/moshest/next-client-cookies) 라이브러리 사용
+
+- `dangerouslySetInnerHTML`을 사용해 `<script>` 태그를 HTML 문서에 직접 삽입하는 방식으로 서버 사이드 렌더링(SSR) 환경에서 클라이언트 사이드에 `windowVarName` 전역 변수를 사용해 쿠키 관련 명령을 저장하고 실행
+
+<hr />
+
+## 현재의 내가 같은 문제를 마주했다면?
+
+<br />
+
+### 예시코드
+
+### 1. React 컴포넌트 렌더링 + 임시로 쿠키에 JWT를 저장하는 로직
+
+```
+const FirstComponent = () => {
+  const { push } = useRouter()
+  const { setToken } = useCookieContext()
+
+  const onLogin = () => {
+    const tokenValue = 'JWT' // 토큰 값
+
+    setCookie('token', tokenValue)
+    setToken(tokenValue)
+
+    push('/item')
+  }
+
+  return (
+    <div
+      className="w-full h-dvh flex items-center justify-center"
+    >
+      <button
+        type="button"
+        onClick={onLogin}
+        className="border-[3px] p-[32px] rounded-[30px]"
+      >
+        로그인 버튼
+      </button>
+    </div>
+  )
+}
+
+export default FirstComponent
+```
+
+로그인을 한 뒤에 JWT를 쿠키에 저장했다는 임시 로직을 만들었다.
+
+### 2. 서버 컴포넌트(컴포넌트명: page.tsx, 경로: /items)에서 SSR 처리
+
+```
+import { QueryClient, dehydrate } from '@tanstack/react-query';
+import { cookies } from 'next/headers';
+import SecondComponent from '../_components/SecondComponent';
+import RQProvider from '../_test/RQProvider';
+import { fetchMyInfo } from '../_test/fetchMyInfo';
+
+const page = async () => {
+  const token = (await cookies()).get("token")?.value
+
+  if (!token) {
+    throw new Error('토큰이 존재하지 않습니다.');
+  }
+
+  const queryClient = new QueryClient();
+
+  await queryClient.prefetchQuery({
+    queryKey: ['test'],
+    queryFn:() => fetchMyInfo(token)
+  });
+
+  const dehydratedState = dehydrate(queryClient);
+
+  return (
+    <RQProvider dehydratedState={dehydratedState}>
+      <SecondComponent/>
+    </RQProvider>
+  )
+}
+
+export default page
+```
+
+이제 특정 페이지를 조회할 경우 서버 컴포넌트 `page.tsx`가 실행되면서 `next/headers`에서 제공하는 cookies를 이용해 서버 단에서 JWT를 가져온다.
+
+그리고 React Query에서 제공하는 `prefetchQuery`를 이용해 서버 단에서 미리 `'test'`라는 queryKey를 통해 데이터를 캐싱 한다.
+
+```
+'use client';
+
+import {
+  HydrationBoundary,
+  QueryClient,
+  QueryClientProvider,
+} from '@tanstack/react-query';
+import { ReactNode, useState } from 'react';
+
+type RQProviderProps = {
+  children: ReactNode;
+  dehydratedState: unknown;
+};
+
+export default function RQProvider({
+   children, dehydratedState
+}: RQProviderProps) {
+  const [client] = useState(() => {
+    return new QueryClient({
+      defaultOptions: {
+        queries: {
+          refetchOnWindowFocus: false,
+          retryOnMount: true,
+          refetchOnReconnect: false,
+          retry: false,
+        },
+      },
+    });
+  });
+
+  return (
+    <QueryClientProvider client={client}>
+      <HydrationBoundary state={dehydratedState}>
+        {children}
+      </HydrationBoundary>
+    </QueryClientProvider>
+  );
+}
+
+```
+
+캐싱 된 데이터는 `dehydrate`를 통해 <b>JSON 직렬화</b>하고, `RQProvider`에 전달된다. 이후 `RQProvider`에서 `HydrationBoundary`에서 다시 수화되어 복원된다.
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/7c8b9941-fbe4-4fdf-a4d4-d541c919c64a/image.png)
+
+#### dehydratedState(직렬화된 데이터)의 값
+
+<br />
+
+</center>
+
+그리고 이 값을 직렬화된 응답받은 데이터 형태(dehydratedState)를 `hydrate` 과정을 통해 다시 사용할 수 있는 촉촉한 상태로 변경시켜 React Query의 클라이언트 캐시로 저장한다.
+
+이렇게 되면, 서버 단에서 사전에 데이터를 페칭하고 클라이언트에서는 `hydrate`를 거쳐 캐시 된 데이터를 사용하게 된다. 이는 초기 로딩 속도 완화, 클라이언트 네트워크 요청을 줄이는 등 SSR의 장점과 큰 연관이 되어있다.
+
+## 쿠키 관리
+
+이제 서버 단에서 한 번만 데이터를 페칭하고 클라이언트로 내려주면 되기 때문에 서버/클라이언트 단에서 모두 쿠키를 사용하기 위해 고민할 필요가 없어졌다. 그리고 이때 서버 단에서 사용되는 쿠키 호출은 next에 내장되어있는 `cookies`를 사용한다.
+
+하지만, 서버 단에서 데이터를 페칭할 때를 제외하고 클라이언트 단에서 쿠키를 사용이 필요한 경우가 있을 수 있다.
+
+이는 기존에 사용했던 다른 라이브러리 외에 `useContext`를 이용해 `layout.tsx` 컴포넌트에서 Provider에 필요한 값을 props로 넘겨 전역으로 사용될 수 있도록 했다.
+
+```jsx
+export default async function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  const token = (await cookies()).get('token')?.value || null;
+
+  return (
+    <html lang="ko">
+      <body>
+        <CookieProvider
+         initialToken={token}
+        >
+          {children}
+        </CookieProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+<hr />
+
+## 애초에 서버/클라이언트 단에서 모두 데이터를 페칭할 필요가 없었다.
+
+### 기존 방식
+
+쿠키 호출 + SSR(서버 단) React Query를 통해 데이터 페칭 -> 쿠키 호출 + React Query를 통해 클라이언트 단에서 데이터 페칭 -> 두 곳에서 모두 사용 가능한 쿠키 호출 방법을 찾지 못함
+
+### 현재 방식
+
+쿠키 호출(next 내장 next/headers - cookies) + SSR(서버 단) React Query를 통해 데이터 페칭 -> dehydrate(데이터 직렬화) 및 클라이언트 컴포넌트에 전달 -> 클라이언트 컴포넌트에서 hydrate(다시 사용가능한 데이터로 촉촉하게 수화)
+
+<br />
+
+당시에는 SSR, React Query, hydrate, dehydrate에 대한 이해도가 부족했던 것 같다. 서버 단에서 React Query를 통해 한 차례 캐시를 진행하면 클라이언트 단에서는 추가적인 호출 없이 사용한다고 생각했다.
+
+여기에 너무 집착한 나머지 두 환경에서 모두 사용 가능한(쿠키에서 JWT 호출) 방법에 집착했었고, 정확한 방법을 찾지 못했었다. 단순하게 서버 단에서만 진행하고 클라이언트에서 사용하면 되는 간단한 방법을 모르고 말이다.
+
+<hr />
+
+## 참고
+
+### useSuspenseQuery는 SSR을 야기한다?
+
+과거 프로젝트를 진행하며, useQuery 훅을 사용했을 때는 SSR 과정이 동작하지 않았지만, useSuspenseQuery를 사용했을 때, SSR이 동작하는 현상을 확인할 수 있었다.
+
+당시에는 정확히 SSR이 발생하는 이유를 몰랐지만, [Fiber와 Suspense의 비동기 처리 메커니즘 톺아보기](https://www.mintmin.dev/blog/2410/20241004) 글을 작성했던 경험이 useSuspenseQuery가 왜 SSR을 발생과의 연관성을 이해하는 데 큰 도움이 되었다.
+
+TanStack GitHub에서 [useSuspenseQuery](https://github.com/TanStack/query/blob/main/packages/react-query/src/useSuspenseQuery.ts) 코드를 살펴보니,
+
+```jsx
+return useBaseQuery(
+  {
+    ...options,
+    enabled: true,
+    suspense: true, 📌
+    throwOnError: defaultThrowOnError,
+    placeholderData: undefined,
+  },
+  QueryObserver,
+  queryClient,
+) as UseSuspenseQueryResult<TData, TError>
+```
+
+suspense 옵션으로 인해 Promise를 던지도록 설정되고, 컴포넌트가 렌더링 되는 과정에서 이 Promise가 React의 Fiber에 감지된다.
+
+즉, SSR 과정에서 컴포넌트가 렌더링 되고, 이때 useSuspenseQuery 훅으로 인해 Fiber에 감지되어 SSR 과정이 발생하게 된 것이다.
+
+<hr />
+
+## 마치며
+
+작년 초에 해당 문제는 나에게 정말 악몽 같은 존재였다. 관련 레퍼런스가 존재하지도 않았고, 결국에는 한 라이브러리를 발견해 해결했지만 만족스러운 해결은 아니었다.
+
+그리고 놀랍게도 관련 게시물이 google search console 기준 내 블로그에서 가장 조회 수가 많으며, next cookie를 검색어로 검색된 클릭 수가 가장 많았다.
+
+아마 나와 비슷한 고민을 했던 분들이 많으셨으리라 예상된다. 현재 내가 생각한 방법이 100% 맞다고 할 수는 없지만 조금이라도 문제 해결 실마리를 찾는 데 도움이 되었으면 좋겠다.
+
+<br />
+<br />
+<hr />
+
+## 전체 코드
+
+- [GitHub](https://github.com/mintmin0320/next-ssr-useSuspenseQuery)
+
+## Reference
+
+- [cookies](https://nextjs.org/docs/app/api-reference/functions/cookies)
+
+- [Advanced Server Rendering](https://tanstack.com/query/latest/docs/framework/react/guides/advanced-ssr)
