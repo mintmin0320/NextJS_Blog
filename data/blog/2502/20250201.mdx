@@ -206,11 +206,11 @@ export default async function RootLayout({
 
 ### 기존 방식
 
-쿠키 호출 + SSR(서버 단) React Query를 통해 데이터 페칭 -> 쿠키 호출 + React Query를 통해 클라이언트 단에서 데이터 페칭 -> 두 곳에서 모두 사용 가능한 쿠키 호출 방법을 찾지 못함
+SSR(서버 단) React Query를 통해 데이터 페칭 -> 쿠키 호출 + React Query를 통해 클라이언트 단에서 데이터 페칭 -> 두 곳에서 모두 사용 가능한 쿠키 호출 방법을 찾지 못함
 
 ### 현재 방식
 
-쿠키 호출(next 내장 next/headers - cookies) + SSR(서버 단) React Query를 통해 데이터 페칭 -> dehydrate(데이터 직렬화) 및 클라이언트 컴포넌트에 전달 -> 클라이언트 컴포넌트에서 hydrate(다시 사용가능한 데이터로 촉촉하게 수화)
+SSR(서버 단) React Query를 통해 데이터 페칭 -> dehydrate(데이터 직렬화) 및 클라이언트 컴포넌트에 전달 -> 클라이언트 컴포넌트에서 hydrate(다시 사용가능한 데이터로 촉촉하게 수화)
 
 <br />
 
