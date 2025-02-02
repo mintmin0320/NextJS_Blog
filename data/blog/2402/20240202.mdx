@@ -7,6 +7,12 @@ summary: '프로젝트 진행 중 useSuspenseInfiniteQuery + Suspense 적용 실
 images: ['/static/images/thumbnail/streaming.avif']
 ---
 
+### 시리즈
+
+1. [Next.js(v14) + React Query 과정에서 발생했던 트러블슈팅 AS](https://www.mintmin.dev/blog/2403/20250201)
+
+<hr />
+
 아이템 리뷰 목록을 <b>React-Query</b>에서 제공하는 `useSuspenseInfiniteQuery`를 사용해 성공적으로 구현을 마치고 `isLoading`을 사용하지 않고,
 
 `Suspense`를 사용해 `fallback`을 처리하려고 하던 중 <b>서버에 계속된 요청으로 인한 무한 루프가 발생</b>해 큰 어려움을 겪게 됐다.
