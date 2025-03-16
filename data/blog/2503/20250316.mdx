@@ -1,0 +1,193 @@
+---
+title: '앱 설치 버튼이 노출되지 않는 현상 해결 기록 (with. PWA)'
+date: '2025-03-16'
+tags: ['트러블슈팅', 'React.js']
+draft: false
+summary: '앱 설치 창이 뜨지 않는 오류 해결 기록'
+images: ['/static/images/thumbnail/pwa.png']
+---
+
+## 문제 정의
+
+현재 개발 중인 서비스를 PC와 모바일에서 간편하게 사용하기 위해 pwa를 이용해 앱 설치를 진행하게 되었다.
+
+<b>"바탕화면에 설치"</b>라는 버튼을 만들고, 클릭 시 앱 설치 prompt가 노출되는 흐름을 원했었는데,
+index 페이지에서만 정상적으로 기능이 동작했고, 다른 페이지에서는 앱 설치 버튼을 비롯해 앱 설치
+prompt가 노출되지 않았다.
+
+<hr />
+
+## 기술 스택 && 준비물
+
+- #### yarn, vite, react
+- #### manifest, pwa
+
+<hr />
+
+## 해결 과정
+
+관련 레퍼런스가 마땅하지 않았기 때문에 문제를 해결하기까지 시간이 조금 소모되었다. 핵심이 되는 단서는 특정 페이지(index)에서만 앱 설치 버튼이 노출되고, 다운로드를 위한 버튼이 동작한다는 것이다.
+
+기존에 앱 설치를 위한 로직은 여러 컴포넌트에서 재사용되기 때문에 custom hook으로 관리되는 상태였고, 이때 로직에서 가장 중요한 역할을 수행하는 beforeinstallprompt 이벤트를 중점적으로 다시 살펴보며 단서를 찾게 되었다.
+
+<br />
+<hr />
+
+<center>
+
+## 참고
+
+</center>
+
+### 1. beforeinstallprompt
+
+- PWA를 설치할 수 있는 상태가 되면 브라우저에서 발생하는 이벤트
+
+### 2. prompt
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/18718013-2527-4d8d-b3cf-9951f5d65090/image.png)
+
+</center>
+
+- prompt는 beforeinstallprompt 이벤트 객체에서 제공하는 메서드로, 사용자가 설치할 수 있도록 프롬프트(팝업 창)를 띄우는 역할
+
+### 3. 브라우저 호환성
+
+<center>
+
+![](https://velog.velcdn.com/images/mintmin0320/post/ee0337b6-f45a-45fc-9f6a-4c411d3dd9c3/image.png)
+
+</center>
+
+- iOS 브라우저 환경에서는 지원이 제한된다.
+
+<hr />
+
+문제 해결을 위해 여러 레퍼런스를 찾아보던 중, MDN에서 제공하는 [beforeinstallprompt event](https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeinstallprompt_event) 문서를 읽다가 단서가 될 수 있는 부분을 발견할 수 있었다.
+
+<br />
+
+> 이 이벤트가 발생하는 보장된 시간은 없지만 일반적으로 페이지 로드 시 발생합니다.
+
+<br />
+
+이 부분에서 나의 상황과 마찬가지로 <b>맨 처음 페이지 로드 시(index) 페이지에서는 이벤트가 정상 동작하지만 다른 페이지 이동 같은 상황이 발생했을 때 이벤트가 발생하지 않는 것</b> 같다는 심증을 가지게 되었다.
+
+다른 페이지에서도 내가 만들었던 useInstallPrompt 훅은 정상적으로 호출되고 있었지만, beforeinstallprompt 이벤트는 발생하지 않았고 당연히 prompt는 노출되지 않았다.<br/>(다른 조건은 만족했다는 전제 e.g. HTTPS, 서비스 워커 manifest.json 등의 조건 )
+
+이제 해결 방법은 당연히 이벤트를 발생시키면 된다고 생각했지만, beforeinstallprompt 이벤트는 <b>브라우저에서 자동으로 관리하는 이벤트기 때문에 개발자가 이벤트를 발생시킬 수는 없다.</b>
+
+또한 <b>브라우저는 한 번 발생한 beforeinstallprompt 이벤트를 재사용하지 않는다.</b>
+
+<br />
+
+## 해결
+
+개발자가 `beforeinstallprompt` 이벤트를 직접 관리할 수 없다면, 초기에 생성된 `beforeinstallprompt` 이벤트를 저장해 필요한 곳에서 사용하는 방법으로 방향을 잡게 되었다. 그리고 이벤트를 전역 상태로 관리하기 위해 `useContext`를 사용했다.
+
+<br />
+
+### useInstallPrompt 훅
+
+```
+import { useInstallPromptContext } from "@/shared/context/InstallPromptContext"
+
+export default function useInstallPrompt() {
+  const { promptEvent, setPromptEvent } = useInstallPromptContext()
+
+  const installApp = async () => {
+    if (!promptEvent) {
+      alert("설치 가능한 PWA가 없습니다.")
+
+      return
+    }
+
+    await promptEvent.prompt()
+    setPromptEvent(null) // 이벤트는 한 번만 유효하므로 초기화
+  }
+
+  return { installApp }
+}
+```
+
+### InstallPromptProvider context
+
+```
+import React, { createContext, useContext, useEffect, useState } from "react"
+
+interface IBeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>
+}
+
+interface IInstallPromptContextType {
+  promptEvent: IBeforeInstallPromptEvent | null
+  setPromptEvent:
+    React.Dispatch<React.SetStateAction<IBeforeInstallPromptEvent | null>>
+}
+
+const InstallPromptContext =
+ createContext<IInstallPromptContextType | undefined>(undefined)
+
+export const InstallPromptProvider = ({
+  children
+}: { children: React.ReactNode }) => {
+  const [promptEvent, setPromptEvent] =
+    useState<IBeforeInstallPromptEvent | null>(null)
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault()
+      setPromptEvent(e as IBeforeInstallPromptEvent)
+    }
+
+    window.addEventListener("beforeinstallprompt", handler)
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler)
+    }
+  }, [])
+
+  return (
+    <InstallPromptContext.Provider value={{ promptEvent, setPromptEvent }}>
+      {children}
+    </InstallPromptContext.Provider>
+  )
+}
+
+export const useInstallPromptContext = () => {
+  const context = useContext(InstallPromptContext)
+
+  if (!context) {
+    throw new Error(`
+      useInstallPromptContext는 반드시
+      InstallPromptProvider 내에서 사용해야 합니다.
+    `)
+  }
+
+
+  return context
+}
+```
+
+이제 어디서든 `useInstallPrompt` 훅만 호출한다면 앱 설치 prompt가 노출되고, 앱 설치가 가능해 진다.
+
+<br />
+<hr />
+
+## 마치며
+
+현재 팀 사정상 반응형 웹으로 모바일에서도 사용 가능하도록 서비스를 제공하고 있지만, 네이티브 앱만큼의 편의성을 제공하는 것에 대해서는 항상 아쉬움이 남아있었다. 이번에 PWA를 사용해 앱 설치를 할 경우 매번 특정 브라우저에 접속해야 하는 등의 어려움을 어느 정도 해소할 수 있었던 것 같다.
+
+정말 뜻밖의 문제였지만, 다행히 큰 어려움 없이 해결할 수 있었다. 이번 기회를 계기로 `beforeinstallprompt`라는 새로운 이벤트를 알게 되었고, 특정 상황에서의 이벤트 관리에 대한 경험을 할 수 있었다.
+
+<br />
+<br />
+<br />
+
+## Reference
+
+- [pwa](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable)
+- [Window: beforeinstallprompt event](https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeinstallprompt_event)
+- [BeforeInstallPromptEvent: prompt() method](https://developer.mozilla.org/en-US/docs/Web/API/BeforeInstallPromptEvent/prompt)
