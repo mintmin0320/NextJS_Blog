@@ -160,8 +160,6 @@ export const useVoteDetail = (voteId: number) => {
 
 ![](https://velog.velcdn.com/images/mintmin0320/post/5f682eaa-f2e6-4a07-a3a7-cc76c592516a/image.png)
 
-- 📌 만약 `Streaming`을 사용하지 않는다면, 여기서 더 이상 에러가 발생하지 않는다. 하지만 `Streaming`을 사용하고 있다면 위와 같은 에러와 경고가 발생하게 된다.
-
 <br />
 
 문제의 원인은 쿠키를 호출하는 부분이다. **에러 메시지**를 분석해 보면,
@@ -172,7 +170,7 @@ export const useVoteDetail = (voteId: number) => {
 
 <br />
 
-여기서 서버 기능은 `cookies().get(key)?.value`를 의미하는 것 같다. 결과적으로 봤을 때, 정상적으로 동작하지만 결국 에러와 경고가 발생하고 있기 때문에 다른 방법이 필요했다.
+클라이언트에서 React Query로 데이터를 페칭하는 과정에서 서버 기능을 사용해서 발생하는 문제인 것으로 추정된다. 여기서 서버 기능은 `cookies().get(key)?.value`를 의미하는 것 같다.
 
 <br />
 <hr />
